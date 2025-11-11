@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>anti-ai-ui - Interactive Demo</title>
+    <meta name="description" content="Interactive demo of anti-ai-ui components - Build automation-resistant user interfaces">
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        margin: 0;
+        padding: 0;
+        color: #0f172a;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .header {
+        background: white;
+        padding: 32px 24px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+      .header h1 {
+        margin: 0 0 8px 0;
+        font-size: 2.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .header p {
+        margin: 8px 0;
+        color: #64748b;
+        font-size: 1.1rem;
+      }
+      .header nav {
+        margin-top: 16px;
+      }
+      .header a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        margin-right: 24px;
+      }
+      .header a:hover {
+        text-decoration: underline;
+      }
+      .content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 24px;
+      }
+      section { margin-bottom: 32px; }
+      .card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+      }
+      .card h2 {
+        margin-top: 0;
+        margin-bottom: 8px;
+        color: #1e293b;
+        font-size: 1.5rem;
+      }
+      .card p {
+        color: #64748b;
+        margin-bottom: 16px;
+      }
+      .container {
+        position: relative;
+        height: 220px;
+        border: 2px dashed #cbd5e1;
+        border-radius: 8px;
+        margin-top: 12px;
+        background: #f8fafc;
+      }
+      button.demo {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border: none;
+        padding: 12px 20px;
+        cursor: pointer;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 14px;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      button.demo:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+      input.demo {
+        background: #fff;
+        color: #0f172a;
+        border: 2px solid #e2e8f0;
+        padding: 10px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      input.demo:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      .grid-host { margin-top: 12px; }
+      .badge {
+        display: inline-block;
+        background: #f1f5f9;
+        color: #475569;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-left: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>anti-ai-ui</h1>
+      <p>Interactive Component Showcase - Vanilla JavaScript</p>
+      <nav>
+        <a href="./react.html">React →</a>
+        <a href="./htmx.html">HTMX →</a>
+        <a href="./jquery.html">jQuery →</a>
+        <a href="./all.html">All Components →</a>
+        <a href="https://github.com/yourusername/anti-ai-ui" target="_blank">GitHub</a>
+      </nav>
+    </div>
+
+    <div class="content">
+
+    <section class="card">
+      <h2>RunawayButton <span class="badge">Interactive</span></h2>
+      <p>Dynamic evasion algorithm that moves away from cursor approach. Perfect for engagement verification.</p>
+      <div class="container" id="runaway-container">
+        <button id="runaway" class="demo" type="button">Catch me</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>FakeDownloadGrid <span class="badge">Verification</span></h2>
+      <p>Grid-based verification system. Only one button is authentic - can you find it?</p>
+      <div id="grid" class="grid-host"></div>
+    </section>
+
+    <section class="card">
+      <h2>CookieHell <span class="badge">Consent</span></h2>
+      <p>Comprehensive consent management with nested preferences. Industry-standard GDPR compliance.</p>
+      <button id="open-cookie-hell" class="demo" type="button">Show Consent Dialog</button>
+    </section>
+
+    <section class="card">
+      <h2>PopupChaos <span class="badge">Sequential</span></h2>
+      <p>Sequential verification system with ordered dismissal requirements.</p>
+      <button id="start-chaos" class="demo" type="button">Launch Verification</button>
+    </section>
+
+    <section class="card">
+      <h2>PasswordHell <span class="badge">Security</span></h2>
+      <p>Advanced password validation with dynamic security requirements.</p>
+      <div id="password-hell"></div>
+    </section>
+
+    <section class="card">
+      <h2>ShiftingInterface <span class="badge">Dynamic</span></h2>
+      <p>Adaptive UI that responds to user interaction patterns. Prevents automated form submission.</p>
+      <div id="shifting-host" class="container"></div>
+    </section>
+
+    <section class="card">
+      <h2>SemanticGaslighting <span class="badge">UX Pattern</span></h2>
+      <p>Semantic action mapping for enhanced user intent verification.</p>
+      <div id="gaslight"></div>
+    </section>
+
+    <section class="card">
+      <h2>MitosisButton <span class="badge">Duplication</span></h2>
+      <p>Self-replicating verification system. Identify the authentic action among duplicates.</p>
+      <div class="container" id="mitosis-zone">
+        <button id="mitosis-seed" class="demo" type="button">Click me</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>MarqueeInputs <span class="badge">Experimental</span></h2>
+      <p>Kinetic form inputs with synchronized state. Tests user focus and adaptability.</p>
+      <div class="container" id="marquee-host"></div>
+    </section>
+
+    </div><!-- content -->
+
+    <script type="module">
+      import {
+        makeButtonRunaway,
+        makeFakeDownloadGrid,
+        makeCookieHell,
+        makePopupChaos,
+        makePasswordHell,
+        makeShiftingInterface,
+        makeSemanticGaslighting,
+        makeMitosisButton,
+        makeMarqueeInputs,
+      } from '../dist/vanilla/index.mjs';
+
+      // Runaway button
+      const container = document.getElementById('runaway-container');
+      const btn = document.getElementById('runaway');
+      if (container && btn) {
+        makeButtonRunaway(btn, { container, speed: 1.2, evasionDistance: 140, jitter: 8 });
+      }
+
+      // Fake download grid
+      const gridHost = document.getElementById('grid');
+      if (gridHost) {
+        makeFakeDownloadGrid(gridHost, {
+          rows: 3,
+          cols: 4,
+          onRealClick: (i) => alert(`You found it at index ${i}!`),
+          onFakeClick: () => console.log('Ad clicked'),
+        });
+      }
+
+      // CookieHell
+      const openBtn = document.getElementById('open-cookie-hell');
+      if (openBtn) {
+        openBtn.addEventListener('click', () => {
+          makeCookieHell({ depth: 3, toggleCount: 4, rejectButtonSize: 10 });
+        });
+      }
+
+      // PopupChaos
+      const chaosBtn = document.getElementById('start-chaos');
+      if (chaosBtn) {
+        let chaosCleanup = null;
+        chaosBtn.addEventListener('click', () => {
+          if (chaosCleanup && typeof chaosCleanup.destroy === 'function') {
+            chaosCleanup.destroy();
+          }
+          chaosCleanup = makePopupChaos({ popupCount: 5 });
+        });
+      }
+
+      // PasswordHell
+      const pwHost = document.getElementById('password-hell');
+      if (pwHost) {
+        makePasswordHell(pwHost, {
+          requirementChangeInterval: 2500,
+          onSubmit: () => alert('Password accepted (temporarily)!'),
+        });
+      }
+
+      // ShiftingInterface
+      const shiftingHost = document.getElementById('shifting-host');
+      if (shiftingHost) {
+        makeShiftingInterface(shiftingHost, {
+          shiftInterval: 1200,
+          duplicateChance: 0.25,
+          colorChangeInterval: 1800,
+        });
+      }
+
+      // SemanticGaslighting
+      const gasHost = document.getElementById('gaslight');
+      if (gasHost) {
+        makeSemanticGaslighting(gasHost, {
+          buttons: [
+            { label: 'Submit', actualAction: 'cancel' },
+            { label: 'Cancel', actualAction: 'submit' },
+            { label: 'Help', actualAction: 'reset' },
+          ],
+          onSubmit: () => alert('Actually submitted!'),
+          onCancel: () => alert('Actually cancelled!'),
+          onReset: () => alert('Form reset!'),
+        });
+      }
+
+      // MitosisButton
+      const mitosisZone = document.getElementById('mitosis-zone');
+      const mitosisSeed = document.getElementById('mitosis-seed');
+      if (mitosisZone && mitosisSeed) {
+        makeMitosisButton(mitosisSeed, {
+          container: mitosisZone,
+          maxClones: 8,
+          initialClones: 6,
+          shuffleIntervalMs: 900,
+          decayMs: 6000,
+          realIndexStrategy: 'random',
+          onRealClick: () => alert('Lucky shot — the real one!'),
+          onFakeClick: () => console.log('Decoy clicked'),
+        });
+      }
+
+      // MarqueeInputs
+      const marqueeHost = document.getElementById('marquee-host');
+      if (marqueeHost) {
+        makeMarqueeInputs(marqueeHost, {
+          count: 6,
+          lanes: 2,
+          speed: 140,
+          direction: 'right',
+          inputWidth: 160,
+          className: 'demo',
+          placeholder: 'Type your email while it moves…',
+          onSubmit: (val) => alert(`Submitted: ${val}`),
+        });
+      }
+    </script>
+  </body>
+  </html>

@@ -1,0 +1,58 @@
+# Source files
+src/
+tests/
+examples/
+
+# Configuration
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+vitest.setup.ts
+.eslintrc.json
+.prettierrc
+
+# Documentation (except README)
+docs/
+CONTRIBUTING.md
+planning/
+
+# Development files
+*.spec.ts
+*.spec.tsx
+*.test.ts
+*.test.tsx
+.git/
+.github/
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+*.tsbuildinfo
+.cache/
+
+# Keep these in the package:
+# LICENSE
+# README.md
+# dist/
+# package.json
