@@ -20,11 +20,6 @@
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.mjs",
       "require": "./dist/utils/index.js"
-    },
-    "./types": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/types/index.mjs",
-      "require": "./dist/types/index.js"
     }
   },
   "files": [
@@ -61,7 +56,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codypearce/anti-ai-ui-framework.git"
+    "url": "git+https://github.com/codypearce/anti-ai-ui-framework.git"
   },
   "bugs": {
     "url": "https://github.com/codypearce/anti-ai-ui-framework/issues"

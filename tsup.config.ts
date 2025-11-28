@@ -5,7 +5,6 @@ export default defineConfig({
     index: 'src/index.ts',
     'vanilla/index': 'src/vanilla/index.ts',
     'utils/index': 'src/utils/index.ts',
-    'types/index': 'src/types/index.ts',
   },
   format: ['cjs', 'esm'],
   dts: true,
