@@ -21,6 +21,7 @@ export { OpacityFlash } from './components/OpacityFlash';
 export { GravityField } from './components/GravityField';
 
 // Hooks
+export { useRunawayButton } from './hooks/useRunawayButton';
 export { usePopupChaos } from './hooks/usePopupChaos';
 
 // Public types
@@ -48,4 +49,5 @@ export type { FloatingBannerAdsProps, FloatingAd } from './components/FloatingBa
 export type { LabelPositionSwapProps, LabelPosition } from './components/LabelPositionSwap';
 export type { OpacityFlashProps } from './components/OpacityFlash';
 export type { GravityFieldProps, GravityWell, WellFollowMode } from './components/GravityField';
+export type { UseRunawayOptions } from './hooks/useRunawayButton';
 export type { PopupData, UsePopupChaosOptions, UsePopupChaosReturn } from './hooks/usePopupChaos';

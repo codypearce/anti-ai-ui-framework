@@ -17,8 +17,15 @@
   <h3>
     <a href="https://codinhood.com/anti-ai-ui/about">What is Anti-AI UI?</a>
     &nbsp;|&nbsp;
-    <a href="https://codinhood.com/anti-ai-ui">Anti-AI Testt</a>
+    <a href="https://codinhood.com/anti-ai-ui">Anti-AI Test</a>
     &nbsp;|&nbsp;
+    <a href="https://codinhood.com/anti-ai-ui-framework">Documentation</a>
+
+  </h3>
+</div>
+
+<div align="center">
+  <h3>
     <a href="https://www.youtube.com/watch?v=g7xtondIT10">Chatgpt Atlas vs Dark Internet Patterns</a>
   </h3>
 </div>
