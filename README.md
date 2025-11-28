@@ -1,7 +1,7 @@
 <div align="center">
-  <h1>Anti-AI UI Framework</h1>
+  <h1>The Anti-AI UI Framework</h1>
 
-  <p>UI components that ensure authentic human engagement through dynamic interaction patterns.</p>
+  <p>The first UI library designed to be intentionally hostile to AI. If you struggle with these patterns, well...</p>
 
 [![npm](https://img.shields.io/npm/v/anti-ai-ui.svg)](https://www.npmjs.com/package/anti-ai-ui)
 [![node](https://img.shields.io/node/v/anti-ai-ui.svg?label=node)](https://www.npmjs.com/package/anti-ai-ui)
