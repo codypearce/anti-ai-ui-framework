@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>The Anti-AI UI Framework</h1>
+  <img src="header.png" alt="Anti-AI UI Framework" width="600" />
 
   <p>The first UI library designed to be intentionally hostile to AI. If you struggle with these patterns, well...</p>
 
@@ -11,6 +11,16 @@
 [![Follow on X](https://img.shields.io/badge/follow-%40codyapearce-1DA1F2?logo=x&style=flat)](https://x.com/codyapearce)
 [![Follow on Bluesky](https://img.shields.io/badge/follow-%40codyapearce-0285FF?logo=bluesky&style=flat&logoColor=white)](https://bsky.app/profile/codyapearce.bsky.social)
 
+</div>
+
+<div align="center">
+  <h3>
+    <a href="https://codinhood.com/anti-ai-ui/about">What is Anti-AI UI?</a>
+    &nbsp;|&nbsp;
+    <a href="https://codinhood.com/anti-ai-ui">Anti-AI Testt</a>
+    &nbsp;|&nbsp;
+    <a href="https://www.youtube.com/watch?v=g7xtondIT10">Chatgpt Atlas vs Dark Internet Patterns</a>
+  </h3>
 </div>
 
 ## Why?
@@ -30,16 +40,6 @@ But can they handle the patterns we've been suffering through for decades?
 20 components. Buttons that run away. Forms that rotate. Labels that lie. Cookie banners nested five layers deep.
 
 Everything humans have endured and some specifically created to frustrate AI browsers. Now available as React components and vanilla JS.
-
-<div align="center">
-  <h3>
-    <a href="https://codinhood.com/anti-ai-ui/about">What is Anti-AI UI?</a>
-    &nbsp;|&nbsp;
-    <a href="https://codinhood.com/anti-ai-ui">Try the Test</a>
-    &nbsp;|&nbsp;
-    <a href="https://www.youtube.com/watch?v=g7xtondIT10">Watch the Video</a>
-  </h3>
-</div>
 
 ---
 
