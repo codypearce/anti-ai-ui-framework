@@ -4,8 +4,12 @@
   <p>UI components that ensure authentic human engagement through dynamic interaction patterns.</p>
 
 [![npm](https://img.shields.io/npm/v/anti-ai-ui.svg)](https://www.npmjs.com/package/anti-ai-ui)
+[![node](https://img.shields.io/node/v/anti-ai-ui.svg?label=node)](https://www.npmjs.com/package/anti-ai-ui)
+[![install size](https://packagephobia.com/badge?p=anti-ai-ui)](https://packagephobia.com/result?p=anti-ai-ui)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)](https://www.typescriptlang.org/)
+[![Follow on X](https://img.shields.io/badge/follow-%40codyapearce-1DA1F2?logo=x&style=flat)](https://x.com/codyapearce)
+[![Follow on Bluesky](https://img.shields.io/badge/follow-%40codyapearce-0285FF?logo=bluesky&style=flat&logoColor=white)](https://bsky.app/profile/codyapearce.bsky.social)
 
 </div>
 
@@ -26,6 +30,16 @@ But can they handle the patterns we've been suffering through for decades?
 20 components. Buttons that run away. Forms that rotate. Labels that lie. Cookie banners nested five layers deep.
 
 Everything humans have endured and some specifically created to frustrate AI browsers. Now available as React components and vanilla JS.
+
+<div align="center">
+  <h3>
+    <a href="https://codinhood.com/anti-ai-ui/about">What is Anti-AI UI?</a>
+    &nbsp;|&nbsp;
+    <a href="https://codinhood.com/anti-ai-ui">Try the Test</a>
+    &nbsp;|&nbsp;
+    <a href="https://www.youtube.com/watch?v=g7xtondIT10">Watch the Video</a>
+  </h3>
+</div>
 
 ---
 
@@ -162,6 +176,12 @@ import {
 ## Documentation
 
 Full docs and interactive demos at [codinhood.com/anti-ai-ui-framework](https://codinhood.com/anti-ai-ui-framework).
+
+---
+
+## More Unhinged Projects
+
+- [I Can't Believe It's Not CSS](https://github.com/codypearce/i-cant-believe-its-not-css) - Style websites using SQL instead of CSS. Database migrations for your styles.
 
 ---
 
