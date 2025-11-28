@@ -57,7 +57,6 @@ export {
   logger,
   createLogger,
   componentLoggers,
-  warnProductionUsage,
   logBotDetection,
   type LogLevel,
   type LoggerOptions,

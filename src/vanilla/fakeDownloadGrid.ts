@@ -1,4 +1,4 @@
-import { warnProductionUsage, componentLoggers } from '../utils/logger';
+import { componentLoggers } from '../utils/logger';
 
 export interface FakeDownloadGridOptions {
   rows?: number;
@@ -17,7 +17,6 @@ export function makeFakeDownloadGrid(
   container: HTMLElement,
   options: FakeDownloadGridOptions = {}
 ) {
-  warnProductionUsage('FakeDownloadGrid (vanilla)');
   const logger = componentLoggers.fakeDownloadGrid;
 
   const rows = clamp(options.rows ?? 3, 1, 10);

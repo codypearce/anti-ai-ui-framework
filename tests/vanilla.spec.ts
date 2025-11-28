@@ -366,8 +366,13 @@ describe('makeShiftingInterface (vanilla)', () => {
     vi.useFakeTimers();
   });
 
-  it('should create form with shifting elements', () => {
+  it('should create shifting elements from container children', () => {
     const container = document.createElement('div');
+    container.innerHTML = `
+      <label>Username<input type="text" /></label>
+      <label>Password<input type="password" /></label>
+      <button>Login</button>
+    `;
     document.body.appendChild(container);
 
     makeShiftingInterface(container);
@@ -375,12 +380,16 @@ describe('makeShiftingInterface (vanilla)', () => {
     const inputs = container.querySelectorAll('input');
     const buttons = container.querySelectorAll('button');
 
-    expect(inputs.length).toBeGreaterThan(0);
-    expect(buttons.length).toBeGreaterThan(0);
+    expect(inputs.length).toBe(2);
+    expect(buttons.length).toBe(1);
   });
 
   it('should shift element positions after interval', () => {
     const container = document.createElement('div');
+    container.innerHTML = `
+      <label>Username<input type="text" /></label>
+      <button>Login</button>
+    `;
     document.body.appendChild(container);
 
     makeShiftingInterface(container, { shiftInterval: 1000 });
@@ -402,6 +411,10 @@ describe('makeShiftingInterface (vanilla)', () => {
 
   it('should duplicate elements based on duplicateChance', () => {
     const container = document.createElement('div');
+    container.innerHTML = `
+      <label>Username<input type="text" /></label>
+      <button>Login</button>
+    `;
     document.body.appendChild(container);
 
     makeShiftingInterface(container, {
@@ -420,6 +433,7 @@ describe('makeShiftingInterface (vanilla)', () => {
 
   it('should change colors based on colorChangeInterval', () => {
     const container = document.createElement('div');
+    container.innerHTML = `<button>Login</button>`;
     document.body.appendChild(container);
 
     makeShiftingInterface(container, { colorChangeInterval: 500 });

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GravityField Example - Anti-AI UI Framework</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      margin: 0;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    p.description {
+      text-align: center;
+      color: #888;
+      margin-bottom: 2rem;
+    }
+
+    .demo-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .gravity-field {
+      width: 100%;
+      height: 400px;
+      background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
+      border: 2px solid #0f3460;
+      border-radius: 12px;
+    }
+
+    .gravity-field button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .gravity-field button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #e94560, #ff6b6b);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #0f3460, #16213e);
+      color: #eee;
+      border: 1px solid #e94560 !important;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #00b894, #00cec9);
+      color: white;
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #fdcb6e, #f39c12);
+      color: #1a1a2e;
+    }
+
+    .controls {
+      margin-top: 2rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .controls label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      color: #888;
+      font-size: 14px;
+    }
+
+    .controls input[type="range"] {
+      width: 150px;
+    }
+
+    .controls input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+    }
+
+    .value-display {
+      color: #e94560;
+      font-weight: bold;
+    }
+
+    .info {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: rgba(233, 69, 96, 0.1);
+      border: 1px solid #e94560;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    .info strong {
+      color: #e94560;
+    }
+
+    .gravity-well {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Black hole center */
+    .gravity-well-core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 14px;
+      height: 14px;
+      background: #000;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Particles that spiral inward and disappear */
+    .gravity-well-particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: #e94560;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+    }
+
+    .gravity-well-particle:nth-child(1) { animation: spiral-in 2.5s linear infinite; }
+    .gravity-well-particle:nth-child(2) { animation: spiral-in 2.5s linear infinite 0.5s; }
+    .gravity-well-particle:nth-child(3) { animation: spiral-in 2.5s linear infinite 1s; }
+    .gravity-well-particle:nth-child(4) { animation: spiral-in 2.5s linear infinite 1.5s; }
+    .gravity-well-particle:nth-child(5) { animation: spiral-in 2.5s linear infinite 2s; }
+
+    @keyframes spiral-in {
+      0% {
+        transform: translate(-50%, -50%) rotate(0deg) translateX(40px);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      80% {
+        opacity: 0.8;
+      }
+      100% {
+        transform: translate(-50%, -50%) rotate(720deg) translateX(0px);
+        opacity: 0;
+      }
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .toggle-btn {
+      padding: 8px 16px;
+      background: #0f3460;
+      border: 1px solid #e94560;
+      color: #eee;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .toggle-btn.active {
+      background: #e94560;
+    }
+
+    select {
+      padding: 8px 16px;
+      background: #0f3460;
+      border: 1px solid #e94560;
+      color: #eee;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1>GravityField</h1>
+    <p class="description">UI elements drift toward invisible gravity wells that move on hover</p>
+
+    <div class="gravity-field" id="gravity-container">
+      <button class="btn-primary">Submit</button>
+      <button class="btn-secondary">Cancel</button>
+      <button class="btn-success">Confirm</button>
+      <button class="btn-warning">Try to Click Me</button>
+    </div>
+
+    <div class="controls">
+      <label>
+        Well Count: <span class="value-display" id="wellCount-value">3</span>
+        <input type="range" id="wellCount" min="1" max="8" value="3">
+      </label>
+      <label>
+        Well Strength: <span class="value-display" id="wellStrength-value">0.5</span>
+        <input type="range" id="wellStrength" min="0.1" max="1" step="0.1" value="0.5">
+      </label>
+      <label>
+        Noise: <span class="value-display" id="noise-value">2</span>
+        <input type="range" id="noise" min="0" max="10" value="2">
+      </label>
+      <label>
+        Reseed on Hover
+        <input type="checkbox" id="reseedOnHover" checked>
+      </label>
+      <label>
+        Follow Speed: <span class="value-display" id="followSpeed-value">0.005</span>
+        <input type="range" id="followSpeed" min="0" max="0.05" step="0.001" value="0.005">
+      </label>
+    </div>
+    <div class="controls-row">
+      <button class="toggle-btn active" id="showWells">Show Gravity Wells</button>
+      <select id="followMode">
+        <option value="follow">Wells Follow Cursor</option>
+        <option value="fixed">Wells Stay Fixed</option>
+        <option value="repel">Wells Repel from Cursor</option>
+        <option value="orbit">Wells Orbit Cursor</option>
+      </select>
+    </div>
+
+    <div class="info">
+      <strong>Bot Angle:</strong> Target drift during approach requires prediction and adaptation.
+      AI agents struggle because elements continuously move toward gravity wells, and those wells
+      shift when the cursor enters the container.
+    </div>
+  </div>
+
+  <script type="module">
+    const container = document.getElementById('gravity-container');
+    let showWells = true;
+    let wells = [];
+    let wellElements = [];
+    let animationId = null;
+
+    function generateWells(count, width, height, strength) {
+      const newWells = [];
+      for (let i = 0; i < count; i++) {
+        newWells.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          strength: strength * (0.5 + Math.random() * 0.5),
+        });
+      }
+      return newWells;
+    }
+
+    function calculateGravityForce(itemX, itemY, wells) {
+      let fx = 0;
+      let fy = 0;
+
+      for (const well of wells) {
+        const dx = well.x - itemX;
+        const dy = well.y - itemY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const effectiveDistance = Math.max(distance, 20);
+        const force = (well.strength * 1000) / (effectiveDistance * effectiveDistance);
+
+        if (distance > 0) {
+          fx += (dx / distance) * force;
+          fy += (dy / distance) * force;
+        }
+      }
+
+      const maxForce = 5;
+      const totalForce = Math.sqrt(fx * fx + fy * fy);
+      if (totalForce > maxForce) {
+        fx = (fx / totalForce) * maxForce;
+        fy = (fy / totalForce) * maxForce;
+      }
+
+      return { fx, fy };
+    }
+
+    function createWellElements() {
+      // Remove old well elements
+      wellElements.forEach(el => el.remove());
+      wellElements = [];
+
+      if (!showWells) return;
+
+      const wellStrength = parseFloat(document.getElementById('wellStrength').value);
+
+      wells.forEach(well => {
+        const el = document.createElement('div');
+        el.className = 'gravity-well';
+        const size = 90 + well.strength * 60;
+        el.style.width = `${size}px`;
+        el.style.height = `${size}px`;
+        el.style.left = `${well.x}px`;
+        el.style.top = `${well.y}px`;
+
+        // Particles that spiral inward
+        for (let i = 0; i < 5; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'gravity-well-particle';
+          el.appendChild(particle);
+        }
+
+        // Black center
+        const core = document.createElement('div');
+        core.className = 'gravity-well-core';
+        el.appendChild(core);
+
+        container.appendChild(el);
+        wellElements.push(el);
+      });
+    }
+
+    function updateWellPositions() {
+      if (!showWells) return;
+      wellElements.forEach((el, i) => {
+        if (wells[i]) {
+          el.style.left = `${wells[i].x}px`;
+          el.style.top = `${wells[i].y}px`;
+        }
+      });
+    }
+
+    let driftingElements = [];
+
+    function initGravityField() {
+      if (animationId) cancelAnimationFrame(animationId);
+
+      const wellCount = parseInt(document.getElementById('wellCount').value);
+      const wellStrength = parseFloat(document.getElementById('wellStrength').value);
+      const noise = parseInt(document.getElementById('noise').value);
+      const reseedOnHover = document.getElementById('reseedOnHover').checked;
+
+      container.style.position = 'relative';
+      container.style.overflow = 'hidden';
+
+      const rect = container.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+
+      // Generate wells
+      wells = generateWells(wellCount, width, height, wellStrength);
+      createWellElements();
+
+      // Get buttons
+      const buttons = Array.from(container.querySelectorAll('button'));
+      driftingElements = buttons.map((element, index) => {
+        element.style.position = 'absolute';
+        element.style.transition = 'none';
+
+        const x = 80 + (index % 2) * 200 + Math.random() * 50;
+        const y = 80 + Math.floor(index / 2) * 150 + Math.random() * 50;
+
+        element.style.left = `${x}px`;
+        element.style.top = `${y}px`;
+        element.style.transform = 'translate(-50%, -50%)';
+
+        return { element, x, y, velocityX: 0, velocityY: 0 };
+      });
+
+      let lastUpdate = 0;
+      const updateInterval = 30;
+
+      function update(timestamp) {
+        if (timestamp - lastUpdate >= updateInterval) {
+          lastUpdate = timestamp;
+
+          const padding = 60;
+
+          driftingElements.forEach(item => {
+            const { fx, fy } = calculateGravityForce(item.x, item.y, wells);
+
+            const noiseX = (Math.random() - 0.5) * noise * 2;
+            const noiseY = (Math.random() - 0.5) * noise * 2;
+
+            const damping = 0.92;
+            item.velocityX = (item.velocityX + fx) * damping + noiseX;
+            item.velocityY = (item.velocityY + fy) * damping + noiseY;
+
+            item.x += item.velocityX;
+            item.y += item.velocityY;
+
+            if (item.x < padding) {
+              item.x = padding;
+              item.velocityX = Math.abs(item.velocityX) * 0.5;
+            } else if (item.x > width - padding) {
+              item.x = width - padding;
+              item.velocityX = -Math.abs(item.velocityX) * 0.5;
+            }
+
+            if (item.y < padding) {
+              item.y = padding;
+              item.velocityY = Math.abs(item.velocityY) * 0.5;
+            } else if (item.y > height - padding) {
+              item.y = height - padding;
+              item.velocityY = -Math.abs(item.velocityY) * 0.5;
+            }
+
+            item.element.style.left = `${item.x}px`;
+            item.element.style.top = `${item.y}px`;
+          });
+
+          updateWellPositions();
+        }
+
+        animationId = requestAnimationFrame(update);
+      }
+
+      animationId = requestAnimationFrame(update);
+
+      // Mouse handlers
+      container.onmouseenter = () => {
+        if (reseedOnHover) {
+          wells = generateWells(wellCount, width, height, wellStrength);
+          createWellElements();
+        }
+      };
+
+      container.onmousemove = (e) => {
+        const rect = container.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const followMode = document.getElementById('followMode').value;
+        const followSpeed = parseFloat(document.getElementById('followSpeed').value);
+
+        wells = wells.map((well, i) => {
+          if (followMode === 'fixed') {
+            return well;
+          } else if (followMode === 'follow') {
+            return {
+              ...well,
+              x: well.x + (mouseX - well.x) * followSpeed,
+              y: well.y + (mouseY - well.y) * followSpeed,
+            };
+          } else if (followMode === 'repel') {
+            const dx = well.x - mouseX;
+            const dy = well.y - mouseY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 150 && dist > 0) {
+              const force = (150 - dist) * followSpeed * 0.5;
+              return {
+                ...well,
+                x: Math.max(40, Math.min(width - 40, well.x + (dx / dist) * force)),
+                y: Math.max(40, Math.min(height - 40, well.y + (dy / dist) * force)),
+              };
+            }
+            return well;
+          } else if (followMode === 'orbit') {
+            const angle = (Date.now() / 1000 + i * (Math.PI * 2 / wells.length));
+            const orbitRadius = 80 + i * 30;
+            return {
+              ...well,
+              x: well.x + (mouseX + Math.cos(angle) * orbitRadius - well.x) * followSpeed,
+              y: well.y + (mouseY + Math.sin(angle) * orbitRadius - well.y) * followSpeed,
+            };
+          }
+          return well;
+        });
+      };
+    }
+
+    // Initialize
+    initGravityField();
+
+    // Update value displays and reinitialize on change
+    ['wellCount', 'wellStrength', 'noise'].forEach(id => {
+      const input = document.getElementById(id);
+      const display = document.getElementById(`${id}-value`);
+
+      input.addEventListener('input', () => {
+        display.textContent = input.value;
+        initGravityField();
+      });
+    });
+
+    // Follow speed just updates display, no reinit needed
+    document.getElementById('followSpeed').addEventListener('input', (e) => {
+      document.getElementById('followSpeed-value').textContent = e.target.value;
+    });
+
+    document.getElementById('reseedOnHover').addEventListener('change', initGravityField);
+
+    // Toggle wells visibility
+    document.getElementById('showWells').addEventListener('click', (e) => {
+      showWells = !showWells;
+      e.target.classList.toggle('active', showWells);
+      e.target.textContent = showWells ? 'Show Gravity Wells' : 'Hide Gravity Wells';
+      createWellElements();
+    });
+  </script>
+</body>
+</html>

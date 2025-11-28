@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { warnProductionUsage, componentLoggers } from '../utils/logger';
+import { componentLoggers } from '../utils/logger';
 
 export type MarqueeDirection = 'left' | 'right';
 
@@ -32,8 +32,7 @@ export const MarqueeInputs: React.FC<MarqueeInputsProps> = ({
   onSubmit,
   initialValue = '',
 }) => {
-  useEffect(() => warnProductionUsage('MarqueeInputs'), []);
-  const logger = useMemo(() => componentLoggers.shiftingInterface, []);
+  const logger = useMemo(() => componentLoggers.marqueeInputs, []);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRefs = useRef<HTMLInputElement[]>([]);

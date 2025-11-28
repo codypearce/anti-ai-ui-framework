@@ -6,15 +6,15 @@ import { PopupChaos } from '../src/components/PopupChaos';
 import { FakeDownloadGrid } from '../src/components/FakeDownloadGrid';
 
 describe('React integration', () => {
-  it('CookieHell closes on Accept All, PopupChaos enforces order, FakeDownloadGrid real click fires', () => {
-    const onClose = vi.fn();
+  it('CookieHell closes on Accept All, PopupChaos allows closing, FakeDownloadGrid real click fires', () => {
+    const onAcceptAll = vi.fn();
     const onAllClosed = vi.fn();
     const onReal = vi.fn();
 
     render(
       <div>
-        <CookieHell onClose={onClose} />
-        <PopupChaos popupCount={2} closeOrder={[1, 0]} onAllClosed={onAllClosed} />
+        <CookieHell onAcceptAll={onAcceptAll} />
+        <PopupChaos popupCount={2} onAllClosed={onAllClosed} />
         <FakeDownloadGrid rows={1} cols={3} realButtonIndex={1} onRealClick={onReal} />
       </div>
     );
@@ -22,16 +22,21 @@ describe('React integration', () => {
     // CookieHell
     const accept = screen.getByRole('button', { name: /accept all/i });
     fireEvent.click(accept);
-    expect(onClose).toHaveBeenCalled();
+    expect(onAcceptAll).toHaveBeenCalled();
 
-    // PopupChaos: wrong close first (id 0) should not remove
-    const closeButtons = screen.getAllByRole('button', { name: '✕' });
+    // PopupChaos: close first popup
+    let closeButtons = screen.getAllByRole('button', { name: '✕' });
+    expect(closeButtons.length).toBe(2);
     fireEvent.click(closeButtons[0]);
-    expect(screen.getAllByRole('button', { name: '✕' }).length).toBe(2);
-    // Now correct first id 1
-    fireEvent.click(closeButtons[1]);
+
     // One remains
-    expect(screen.getAllByRole('button', { name: '✕' }).length).toBe(1);
+    closeButtons = screen.getAllByRole('button', { name: '✕' });
+    expect(closeButtons.length).toBe(1);
+
+    // Close last popup
+    fireEvent.click(closeButtons[0]);
+    expect(screen.queryAllByRole('button', { name: '✕' }).length).toBe(0);
+    expect(onAllClosed).toHaveBeenCalled();
 
     // FakeDownloadGrid real click at index 1
     const allButtons = screen.getAllByRole('button');

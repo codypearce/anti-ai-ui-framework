@@ -1,5 +1,5 @@
 import React from 'react';
-import { warnProductionUsage, componentLoggers } from '../utils/logger';
+import { componentLoggers } from '../utils/logger';
 
 export type GaslightAction = 'submit' | 'cancel' | 'reset' | 'noop';
 
@@ -23,7 +23,6 @@ export const SemanticGaslighting: React.FC<SemanticGaslightingProps> = ({
   onReset,
   onAction,
 }) => {
-  React.useEffect(() => warnProductionUsage('SemanticGaslighting'), []);
   const logger = React.useMemo(() => componentLoggers.semanticGaslighting, []);
 
   const doAction = (def: GaslightButtonDef) => () => {

@@ -1,4 +1,4 @@
-import { warnProductionUsage, componentLoggers } from '../utils/logger';
+import { componentLoggers } from '../utils/logger';
 
 export type MarqueeDirection = 'left' | 'right';
 
@@ -16,7 +16,6 @@ export interface MarqueeInputsOptions {
 }
 
 export function makeMarqueeInputs(container: HTMLElement, options: MarqueeInputsOptions = {}) {
-  warnProductionUsage('MarqueeInputs (vanilla)');
   const logger = componentLoggers.shiftingInterface;
 
   const count = options.count ?? 6;

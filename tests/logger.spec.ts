@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   logger,
   createLogger,
-  warnProductionUsage,
   logBotDetection,
   type LogLevel,
 } from '../src/utils/logger';
@@ -159,17 +158,6 @@ describe('logger utility', () => {
     expect(consoleGroupSpy).not.toHaveBeenCalled();
     expect(consoleGroupEndSpy).not.toHaveBeenCalled();
     expect(consoleTableSpy).not.toHaveBeenCalled();
-  });
-
-  it('warnProductionUsage logs component initialization', () => {
-    // Enable debug level on default logger since it defaults to 'info'
-    logger.setLevel('debug');
-    warnProductionUsage('TestComponent');
-
-    // Should call debug on default logger
-    expect(consoleDebugSpy).toHaveBeenCalledWith(
-      '[anti-ai-ui] TestComponent initialized'
-    );
   });
 
   it('logBotDetection logs bot detection events', () => {

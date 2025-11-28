@@ -5,7 +5,7 @@ import {
   isElementCornered,
   calculateEscapeRoute,
 } from '../utils/evasionLogic';
-import { warnProductionUsage, componentLoggers } from '../utils/logger';
+import { componentLoggers } from '../utils/logger';
 
 export interface RunawayOptions {
   speed?: number;
@@ -21,7 +21,6 @@ export function makeButtonRunaway(element: HTMLElement, options: RunawayOptions 
   const container = options.container ?? (element.parentElement as HTMLElement | null) ?? document.body;
   const logger = componentLoggers.runawayButton;
 
-  warnProductionUsage('RunawayButton (vanilla)');
 
   // Ensure positioning
   if (getComputedStyle(container).position === 'static') {

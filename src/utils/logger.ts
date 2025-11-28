@@ -116,15 +116,19 @@ export const componentLoggers = {
   passwordHell: createLogger('PasswordHell'),
   shiftingInterface: createLogger('ShiftingInterface'),
   semanticGaslighting: createLogger('SemanticGaslighting'),
+  mitosisButton: createLogger('MitosisButton'),
+  threeFormCarousel: createLogger('ThreeFormCarousel'),
+  tabIndexRandomization: createLogger('TabIndexRandomization'),
+  randomFakeErrors: createLogger('RandomFakeErrors'),
+  fakeMarqueeFields: createLogger('FakeMarqueeFields'),
+  formChaos: createLogger('FormChaos'),
+  glitchText: createLogger('GlitchText'),
+  floatingBannerAds: createLogger('FloatingBannerAds'),
+  labelPositionSwap: createLogger('LabelPositionSwap'),
+  opacityFlash: createLogger('OpacityFlash'),
+  marqueeInputs: createLogger('MarqueeInputs'),
+  gravityField: createLogger('GravityField'),
 };
-
-/**
- * Log initialization of component for debugging purposes
- */
-export function warnProductionUsage(componentName: string): void {
-  // Silent in production - component initialization is logged via debug level
-  logger.debug(`${componentName} initialized`);
-}
 
 /**
  * Log bot detection event

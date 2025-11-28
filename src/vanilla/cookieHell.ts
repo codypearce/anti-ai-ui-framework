@@ -1,6 +1,7 @@
-import { warnProductionUsage, componentLoggers } from '../utils/logger';
+import { componentLoggers } from '../utils/logger';
 
 export interface CookieHellOptions {
+  container: HTMLElement; // user provides the container
   depth?: number;
   toggleCount?: number;
   rejectButtonSize?: number;
@@ -21,41 +22,18 @@ function makeTree(depth: number, width: number, prefix = 't'): NodeDef[] {
   return nodes;
 }
 
-export function makeCookieHell(options: CookieHellOptions = {}) {
-  warnProductionUsage('CookieHell (vanilla)');
+export function makeCookieHell(options: CookieHellOptions) {
   const logger = componentLoggers.cookieHell;
   const depth = options.depth ?? 3;
   const width = options.toggleCount ?? 4;
   const rejectButtonSize = Math.max(8, options.rejectButtonSize ?? 10);
   let tree = makeTree(depth, width);
 
-  const overlay = document.createElement('div');
-  overlay.style.position = 'fixed';
-  overlay.style.inset = '0';
-  overlay.style.background = 'rgba(15,23,42,0.66)';
-  overlay.style.display = 'flex';
-  overlay.style.alignItems = 'center';
-  overlay.style.justifyContent = 'center';
-  overlay.style.zIndex = '9999';
-
-  const panel = document.createElement('div');
-  panel.style.background = '#fff';
-  panel.style.color = '#0f172a';
-  panel.style.width = 'min(90vw, 900px)';
-  panel.style.maxHeight = '85vh';
-  panel.style.overflow = 'auto';
-  panel.style.borderRadius = '8px';
-  panel.style.boxShadow = '0 10px 40px rgba(0,0,0,0.3)';
-
-  const header = document.createElement('div');
-  header.style.padding = '16px';
-  header.style.borderBottom = '1px solid #e2e8f0';
-  header.innerHTML = `<h2 style="margin:0">Your Privacy Is Important (To Us)</h2><p style="margin:8px 0 0">We and 413 partners use cookies.</p>`;
+  const container = options.container;
 
   const body = document.createElement('div');
   body.style.display = 'flex';
   body.style.gap = '16px';
-  body.style.padding = '16px';
 
   const side = document.createElement('div');
   side.style.flex = '0 0 240px';
@@ -66,7 +44,6 @@ export function makeCookieHell(options: CookieHellOptions = {}) {
   accept.addEventListener('click', () => {
     logger.info('Accept all');
     options.onAcceptAll?.();
-    document.body.removeChild(overlay);
   });
 
   const reject = document.createElement('button');
@@ -78,7 +55,7 @@ export function makeCookieHell(options: CookieHellOptions = {}) {
   reject.addEventListener('click', () => {
     logger.warn('Reject all (good luck)');
     options.onRejectAll?.();
-    // chaos: rebuild tree randomly instead of closing
+    // Refresh preferences to ensure accurate partner consent status
     tree = makeTree(depth, width);
     renderTree();
   });
@@ -150,14 +127,11 @@ export function makeCookieHell(options: CookieHellOptions = {}) {
   body.appendChild(grid);
   renderTree();
 
-  panel.appendChild(header);
-  panel.appendChild(body);
-  overlay.appendChild(panel);
-  document.body.appendChild(overlay);
+  container.appendChild(body);
 
   return {
     destroy() {
-      if (overlay.parentElement) overlay.parentElement.removeChild(overlay);
+      if (body.parentElement) body.parentElement.removeChild(body);
     },
   };
 }

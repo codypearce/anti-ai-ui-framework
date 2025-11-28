@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { warnProductionUsage, componentLoggers } from '../utils/logger';
+import { componentLoggers } from '../utils/logger';
 
 export interface PasswordHellProps {
   requirementChangeInterval?: number; // ms
@@ -77,8 +77,6 @@ export const PasswordHell: React.FC<PasswordHellProps> = ({
   );
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
-
-  useEffect(() => warnProductionUsage('PasswordHell'), []);
 
   // Update when provided rules change
   useEffect(() => {

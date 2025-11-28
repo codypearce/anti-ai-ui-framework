@@ -61,12 +61,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/anti-ai-ui.git"
+    "url": "https://github.com/codypearce/anti-ai-ui-framework.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/anti-ai-ui/issues"
+    "url": "https://github.com/codypearce/anti-ai-ui-framework/issues"
   },
-  "homepage": "https://github.com/yourusername/anti-ai-ui#readme",
+  "homepage": "https://github.com/codypearce/anti-ai-ui-framework#readme",
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=7.0.0"

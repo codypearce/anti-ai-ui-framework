@@ -1,40 +1,67 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import { MitosisButton } from '../src/components/MitosisButton';
 
 describe('MitosisButton (React)', () => {
-  it('duplicates on click and distinguishes real vs fake', () => {
-    const onReal = vi.fn();
-    const onFake = vi.fn();
+  it('renders initial buttons and handles clicks', () => {
+    const onClick = vi.fn();
+    const onWin = vi.fn();
     const { container } = render(
       <div style={{ width: 300, height: 200 }}>
-        <MitosisButton maxClones={2} decayMs={5000} realIndexStrategy="rotate" onRealClick={onReal} onFakeClick={onFake}>
+        <MitosisButton initialCount={3} maxButtons={10} multiplyBy={2} onClick={onClick} onWin={onWin}>
           Click me
         </MitosisButton>
       </div>
     );
 
-    // Initially one button
-    const first = screen.getByRole('button', { name: 'Click me' });
-    fireEvent.click(first);
-    expect(onReal).toHaveBeenCalledTimes(1);
+    // Should start with initialCount buttons
+    const buttons = container.querySelectorAll('button');
+    expect(buttons.length).toBe(3);
 
-    // After click, clones should appear
-    const afterButtons = container.querySelectorAll('button');
-    expect(afterButtons.length).toBeGreaterThan(1);
+    // Click a button - should multiply (add 2 more)
+    fireEvent.click(buttons[0]);
+    expect(onClick).toHaveBeenCalledTimes(1);
 
-    // Find the fake (one without data-testid=mitosis-real) and click it
-    const real = container.querySelector('button[data-testid="mitosis-real"]');
-    const fake = Array.from(afterButtons).find((b) => b !== real) as HTMLButtonElement;
-    expect(fake).toBeTruthy();
-    fireEvent.click(fake);
-    expect(onFake).toHaveBeenCalledTimes(1);
+    const afterClick = container.querySelectorAll('button');
+    expect(afterClick.length).toBe(5); // 3 + 2
+  });
 
-    // Cap clones to maxClones
-    const buttonsNow = container.querySelectorAll('button');
-    // total buttons = 1 real + up to maxClones clones
-    expect(buttonsNow.length).toBeLessThanOrEqual(1 + 2);
+  it('switches to removal mode after reaching maxButtons', () => {
+    const onClick = vi.fn();
+    const { container } = render(
+      <div style={{ width: 300, height: 200 }}>
+        <MitosisButton initialCount={4} maxButtons={6} multiplyBy={2} onClick={onClick}>
+          Click me
+        </MitosisButton>
+      </div>
+    );
+
+    // Start with 4, click to add 2 = 6, which hits max
+    let buttons = container.querySelectorAll('button');
+    expect(buttons.length).toBe(4);
+
+    fireEvent.click(buttons[0]);
+    buttons = container.querySelectorAll('button');
+    // Should switch to removal mode and remove the clicked button
+    expect(buttons.length).toBe(3);
+  });
+
+  it('calls onWin when last button is clicked', () => {
+    const onWin = vi.fn();
+    const { container } = render(
+      <div style={{ width: 300, height: 200 }}>
+        <MitosisButton initialCount={1} onWin={onWin}>
+          Click me
+        </MitosisButton>
+      </div>
+    );
+
+    const buttons = container.querySelectorAll('button');
+    expect(buttons.length).toBe(1);
+
+    fireEvent.click(buttons[0]);
+    expect(onWin).toHaveBeenCalledTimes(1);
   });
 });
 

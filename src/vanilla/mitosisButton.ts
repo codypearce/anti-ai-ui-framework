@@ -1,5 +1,5 @@
 import { randomPosition } from '../utils/randomPosition';
-import { warnProductionUsage, componentLoggers } from '../utils/logger';
+import { componentLoggers } from '../utils/logger';
 
 export type RealIndexStrategy = 'rotate' | 'random';
 
@@ -33,7 +33,6 @@ export function makeMitosisButton(element: HTMLButtonElement, opts: MitosisOptio
     onFakeClick: opts.onFakeClick ?? (() => {}),
   };
 
-  warnProductionUsage('MitosisButton (vanilla)');
   const logger = componentLoggers.semanticGaslighting; // reuse namespace
 
   const container = options.container;
@@ -107,7 +106,7 @@ export function makeMitosisButton(element: HTMLButtonElement, opts: MitosisOptio
   element.addEventListener('click', () => handleClick(0));
   markReal();
 
-  // Spawn initial clones for immediate chaos
+  // Spawn initial clones to create additional interaction targets
   if (options.initialClones > 0) {
     const toAdd = Math.min(options.initialClones, options.maxClones);
     for (let i = 0; i < toAdd; i++) addClone();

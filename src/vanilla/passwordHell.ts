@@ -1,4 +1,4 @@
-import { warnProductionUsage, componentLoggers } from '../utils/logger';
+import { componentLoggers } from '../utils/logger';
 
 export interface PasswordHellOptions {
   requirementChangeInterval?: number;
@@ -21,7 +21,6 @@ function pickRules(): Rule[] {
 }
 
 export function makePasswordHell(container: HTMLElement, options: PasswordHellOptions = {}) {
-  warnProductionUsage('PasswordHell (vanilla)');
   const logger = componentLoggers.passwordHell;
   const interval = options.requirementChangeInterval ?? 2500;
 

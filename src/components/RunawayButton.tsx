@@ -9,7 +9,7 @@ import {
   isElementCornered,
   calculateEscapeRoute,
 } from '../utils/evasionLogic';
-import { warnProductionUsage, componentLoggers } from '../utils/logger';
+import { componentLoggers } from '../utils/logger';
 
 export interface RunawayButtonProps {
   speed?: number; // Speed multiplier for evasion movement
@@ -117,10 +117,6 @@ export const RunawayButton: React.FC<RunawayButtonProps> = ({
   style,
   children,
 }) => {
-  useEffect(() => {
-    warnProductionUsage('RunawayButton');
-  }, []);
-
   const { containerRef, buttonRef, pos, initialized, onMouseMove } = useRunawayButton({
     speed,
     evasionDistance,

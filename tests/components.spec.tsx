@@ -63,24 +63,46 @@ describe('FakeDownloadGrid (React)', () => {
 });
 
 describe('PopupChaos (React)', () => {
-  it('enforces close order', () => {
+  it('renders popups and allows closing them', () => {
     const onAllClosed = vi.fn();
-    const order = [2, 1, 0];
-    render(<PopupChaos popupCount={3} closeOrder={order} onAllClosed={onAllClosed} />);
-    // There are 3 "✕" buttons; try closing wrong one first
-    const closeButtons = screen.getAllByRole('button', { name: '✕' });
-    // Try closing id 0 first (wrong)
+    render(<PopupChaos popupCount={3} onAllClosed={onAllClosed} />);
+
+    // Should have 3 close buttons initially
+    let closeButtons = screen.getAllByRole('button', { name: '✕' });
+    expect(closeButtons.length).toBe(3);
+
+    // Close first popup
     fireEvent.click(closeButtons[0]);
-    expect(screen.getAllByRole('button', { name: '✕' }).length).toBe(3);
-    // Now close id 2
-    fireEvent.click(closeButtons[2]);
-    expect(screen.getAllByRole('button', { name: '✕' }).length).toBe(2);
+    closeButtons = screen.getAllByRole('button', { name: '✕' });
+    expect(closeButtons.length).toBe(2);
+
+    // Close second popup
+    fireEvent.click(closeButtons[0]);
+    closeButtons = screen.getAllByRole('button', { name: '✕' });
+    expect(closeButtons.length).toBe(1);
+
+    // Close last popup - should trigger onAllClosed
+    fireEvent.click(closeButtons[0]);
+    expect(screen.queryAllByRole('button', { name: '✕' }).length).toBe(0);
+    expect(onAllClosed).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('ShiftingInterface (React)', () => {
-  it('renders login interface with username and password fields', () => {
-    const { container } = render(<ShiftingInterface shiftInterval={1000} duplicateChance={0.2} colorChangeInterval={2000} />);
+  it('renders children elements with shifting behavior', () => {
+    const { container } = render(
+      <ShiftingInterface shiftInterval={1000} duplicateChance={0.2} colorChangeInterval={2000}>
+        <label>
+          Username
+          <input type="text" />
+        </label>
+        <label>
+          Password
+          <input type="password" />
+        </label>
+        <button type="button">Login</button>
+      </ShiftingInterface>
+    );
 
     // Should have initial 3 elements (username, password, submit)
     const inputs = container.querySelectorAll('input');
@@ -93,6 +115,43 @@ describe('ShiftingInterface (React)', () => {
     expect(screen.getByText('Username')).toBeInTheDocument();
     expect(screen.getByText('Password')).toBeInTheDocument();
     expect(screen.getByText('Login')).toBeInTheDocument();
+  });
+
+  it('accepts custom container styles', () => {
+    const { container } = render(
+      <ShiftingInterface style={{ width: '500px', height: '300px', backgroundColor: '#f0f0f0' }}>
+        <button>Test</button>
+      </ShiftingInterface>
+    );
+
+    const wrapper = container.querySelector('div');
+    expect(wrapper?.style.width).toBe('500px');
+    expect(wrapper?.style.height).toBe('300px');
+    expect(wrapper?.style.backgroundColor).toBe('rgb(240, 240, 240)');
+  });
+
+  it('accepts custom className', () => {
+    const { container } = render(
+      <ShiftingInterface className="custom-shifting">
+        <button>Test</button>
+      </ShiftingInterface>
+    );
+
+    const wrapper = container.querySelector('.custom-shifting');
+    expect(wrapper).toBeInTheDocument();
+  });
+
+  it('accepts custom colors', () => {
+    const customColors = ['#ff0000', '#00ff00', '#0000ff'];
+    const { container } = render(
+      <ShiftingInterface colors={customColors}>
+        <button>Test Button</button>
+      </ShiftingInterface>
+    );
+    // Color application is tested via visual appearance, test that it renders
+    expect(screen.getByText('Test Button')).toBeInTheDocument();
+    // Verify container exists
+    expect(container.querySelector('div')).toBeInTheDocument();
   });
 });
 

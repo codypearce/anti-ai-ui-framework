@@ -17,8 +17,9 @@ describe('PerfectMovementDetector', () => {
   });
 
   it('should detect perfectly straight movement', () => {
-    // Add points in a perfectly straight line
+    // Add points in a perfectly straight line with uniform timing
     for (let i = 0; i < 15; i++) {
+      vi.spyOn(Date, 'now').mockReturnValueOnce(i * 50);
       detector.addPoint(i * 10, i * 10);
     }
 

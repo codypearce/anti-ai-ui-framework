@@ -1,4 +1,4 @@
-import { warnProductionUsage, componentLoggers } from '../utils/logger';
+import { componentLoggers } from '../utils/logger';
 
 export type GaslightAction = 'submit' | 'cancel' | 'reset' | 'noop';
 
@@ -16,7 +16,6 @@ export interface SemanticGaslightingOptions {
 }
 
 export function makeSemanticGaslighting(container: HTMLElement, options: SemanticGaslightingOptions) {
-  warnProductionUsage('SemanticGaslighting (vanilla)');
   const logger = componentLoggers.semanticGaslighting;
 
   container.style.display = 'flex';

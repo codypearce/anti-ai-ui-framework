@@ -1,164 +1,133 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { randomPosition, type Position } from '../utils/randomPosition';
-import { warnProductionUsage, componentLoggers } from '../utils/logger';
-
-export type RealIndexStrategy = 'rotate' | 'random';
+import { componentLoggers } from '../utils/logger';
 
 export interface MitosisButtonProps {
-  maxClones?: number; // Maximum number of clones present at once (excluding the real one)
-  decayMs?: number; // Milliseconds after which clones disappear
-  realIndexStrategy?: RealIndexStrategy; // How to choose next real index after interactions
-  initialClones?: number; // How many clones to spawn on mount (for immediate chaos)
-  shuffleIntervalMs?: number; // How often to reassign the real button (0 = disabled)
-  realStartsRandom?: boolean; // If true and there are clones initially, the real button starts at a random index
-  onRealClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  onFakeClick?: (event: React.MouseEvent<HTMLButtonElement>, index: number) => void;
+  /**
+   * Initial number of buttons to start with
+   * Default: 6
+   */
+  initialCount?: number;
+  /**
+   * Maximum number of buttons before they start being removed on click instead of multiplying
+   * Default: 20
+   */
+  maxButtons?: number;
+  /**
+   * Number of new buttons to spawn when clicking a button (during multiplication phase)
+   * Default: 2
+   */
+  multiplyBy?: number;
+  /**
+   * Callback when a button is clicked (but not the winning click)
+   */
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>, buttonId: number) => void;
+  /**
+   * Callback when the user wins (gets down to 1 button and clicks it)
+   */
+  onWin?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   className?: string;
   style?: React.CSSProperties;
   children?: React.ReactNode;
 }
 
-interface CloneDef {
+interface ButtonDef {
   id: number;
-  createdAt: number;
   pos: Position; // percent-based within container (0-100)
 }
 
-let __cloneId = 1;
+let __buttonId = 1;
 
 export const MitosisButton: React.FC<MitosisButtonProps> = ({
-  maxClones = 8,
-  decayMs = 6000,
-  realIndexStrategy = 'rotate',
-  initialClones = 0,
-  shuffleIntervalMs = 0,
-  realStartsRandom = false,
-  onRealClick,
-  onFakeClick,
+  initialCount = 6,
+  maxButtons = 20,
+  multiplyBy = 2,
+  onClick,
+  onWin,
   className,
   style,
   children,
 }) => {
-  useEffect(() => {
-    warnProductionUsage('MitosisButton');
-  }, []);
+  const logger = useMemo(() => componentLoggers.mitosisButton, []);
 
-  const logger = useMemo(() => componentLoggers.semanticGaslighting, []); // reuse existing logger namespace
-  const [clones, setClones] = useState<CloneDef[]>(() => {
-    const toAdd = Math.max(0, Math.min(initialClones, maxClones));
-    const now = Date.now();
-    return Array.from({ length: toAdd }).map(() => ({
-      id: __cloneId++,
-      createdAt: now,
+  const [buttons, setButtons] = useState<ButtonDef[]>(() => {
+    return Array.from({ length: initialCount }).map(() => ({
+      id: __buttonId++,
       pos: randomPosition({ minX: 10, maxX: 90, minY: 10, maxY: 90 }),
     }));
   });
-  const [realIndex, setRealIndex] = useState<number>(() => {
-    const total = 1 + Math.max(0, Math.min(initialClones, maxClones));
-    if (realStartsRandom && total > 1) {
-      return Math.floor(Math.random() * total);
-    }
-    return 0; // seed is real initially
-  });
-  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Periodically decay old clones
-  useEffect(() => {
-    if (decayMs <= 0) return;
-    const iv = setInterval(() => {
-      const now = Date.now();
-      setClones((prev) => prev.filter((c) => now - c.createdAt < decayMs));
-    }, Math.min(500, Math.max(200, Math.floor(decayMs / 6))));
-    return () => clearInterval(iv);
-  }, [decayMs]);
-
-  const addClone = useCallback(() => {
-    setClones((prev) => {
-      if (prev.length >= maxClones) return prev;
-      // choose a random percent-based position with padding
-      const pos = randomPosition({ minX: 10, maxX: 90, minY: 10, maxY: 90 });
-      const next: CloneDef = { id: __cloneId++, createdAt: Date.now(), pos };
-      return [...prev, next];
-    });
-  }, [maxClones]);
-
-  const pickNextRealIndex = useCallback(
-    (current: number, totalButtons: number) => {
-      if (realIndexStrategy === 'rotate') {
-        return (current + 1) % totalButtons;
-      }
-      // random
-      return Math.floor(Math.random() * totalButtons);
-    },
-    [realIndexStrategy]
-  );
-
-  // Note: initial clones are created synchronously in state initializer above
-
-  // Periodically shuffle which button is real
-  useEffect(() => {
-    if (shuffleIntervalMs > 0) {
-      const iv = setInterval(() => {
-        const total = clones.length + 1;
-        if (total > 1) {
-          setRealIndex((curr) => pickNextRealIndex(curr, total));
-        }
-      }, shuffleIntervalMs);
-      return () => clearInterval(iv);
-    }
-    return undefined;
-  }, [clones.length, shuffleIntervalMs, pickNextRealIndex]);
+  // Track if we've reached max and are now in removal mode
+  const [removalMode, setRemovalMode] = useState(false);
 
   const handleClick = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>, index: number) => {
-      const total = clones.length + 1;
-      const isReal = index === realIndex;
-      if (isReal) {
-        onRealClick?.(e);
-      } else {
-        onFakeClick?.(e, index);
+    (e: React.MouseEvent<HTMLButtonElement>, buttonId: number) => {
+      // Check if this is the winning click (down to 1 button)
+      if (buttons.length === 1) {
+        logger.info('MitosisButton: WIN! Last button clicked');
+        onWin?.(e);
+        return;
       }
 
-      addClone();
-      const nextTotal = Math.min(total + 1, maxClones + 1);
-      setRealIndex((curr) => pickNextRealIndex(curr, nextTotal));
-      logger.debug('MitosisButton click', { isReal, total: nextTotal });
+      // Regular click callback
+      onClick?.(e, buttonId);
+
+      setButtons((prev) => {
+        // In removal mode, always remove
+        if (removalMode) {
+          logger.debug('MitosisButton: removal mode, removing button', { buttonId, total: prev.length - 1 });
+          return prev.filter((b) => b.id !== buttonId);
+        }
+
+        // Check if adding new buttons would exceed the limit
+        const newTotal = prev.length + multiplyBy;
+        if (newTotal >= maxButtons) {
+          // Switch to removal mode
+          setRemovalMode(true);
+          logger.info('MitosisButton: reached max, switching to removal mode', { total: prev.length });
+          return prev.filter((b) => b.id !== buttonId);
+        }
+
+        // Otherwise, spawn new buttons (mitosis!)
+        const newButtons: ButtonDef[] = [];
+        for (let i = 0; i < multiplyBy; i++) {
+          newButtons.push({
+            id: __buttonId++,
+            pos: randomPosition({ minX: 10, maxX: 90, minY: 10, maxY: 90 }),
+          });
+        }
+
+        logger.debug('MitosisButton: multiplying', {
+          buttonId,
+          spawned: newButtons.length,
+          total: prev.length + newButtons.length
+        });
+
+        return [...prev, ...newButtons];
+      });
     },
-    [addClone, clones.length, realIndex, onRealClick, onFakeClick, pickNextRealIndex, maxClones, logger]
+    [buttons.length, removalMode, onClick, onWin, maxButtons, multiplyBy, logger]
   );
 
-  // Build render list: seed first, then clones
-  const buttons = useMemo(() => {
-    const list: { key: string; pos: Position; isSeed: boolean }[] = [];
-    // Seed button position: center by default (50, 50)
-    list.push({ key: 'seed', pos: { x: 50, y: 50 }, isSeed: true });
-    clones.forEach((c) => list.push({ key: String(c.id), pos: c.pos, isSeed: false }));
-    return list;
-  }, [clones]);
-
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {buttons.map((btn, i) => {
-        const real = i === realIndex;
-        return (
-          <button
-            key={btn.key}
-            className={className}
-            style={{
-              position: 'absolute',
-              left: `${btn.pos.x}%`,
-              top: `${btn.pos.y}%`,
-              transform: 'translate(-50%, -50%)',
-              ...style,
-            }}
-            data-testid={real ? 'mitosis-real' : undefined}
-            onClick={(e) => handleClick(e, i)}
-            type="button"
-          >
-            {children ?? 'Click me'}
-          </button>
-        );
-      })}
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {buttons.map((btn) => (
+        <button
+          key={btn.id}
+          className={className}
+          style={{
+            position: 'absolute',
+            left: `${btn.pos.x}%`,
+            top: `${btn.pos.y}%`,
+            transform: 'translate(-50%, -50%)',
+            ...style,
+          }}
+          onClick={(e) => handleClick(e, btn.id)}
+          type="button"
+        >
+          {children ?? 'Click me'}
+        </button>
+      ))}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { warnProductionUsage, componentLoggers } from '../utils/logger';
+import { componentLoggers } from '../utils/logger';
 
 export interface FakeDownloadGridProps {
   rows?: number; // number of rows in the grid
@@ -36,10 +36,6 @@ export const FakeDownloadGrid: React.FC<FakeDownloadGridProps> = ({
   const logger = useMemo(() => componentLoggers.fakeDownloadGrid, []);
 
   useEffect(() => {
-    warnProductionUsage('FakeDownloadGrid');
-  }, []);
-
-  useEffect(() => {
     if (realButtonIndex !== undefined) {
       setRealIndex(clamp(realButtonIndex, 0, total - 1));
     }
@@ -55,7 +51,7 @@ export const FakeDownloadGrid: React.FC<FakeDownloadGridProps> = ({
     } else {
       logger.debug('Fake download clicked at index', i);
       onFakeClick?.(i, e);
-      // Optional: mischievous behavior could shuffle the real index
+      // Dynamic repositioning ensures users verify before downloading
       if (realButtonIndex === undefined) {
         const next = Math.floor(Math.random() * total);
         setRealIndex(next);
@@ -80,7 +76,7 @@ export const FakeDownloadGrid: React.FC<FakeDownloadGridProps> = ({
             onClick={handleClick(i)}
             aria-label={isReal ? 'Real download' : 'Advertisement'}
             style={{
-              // Make differentiation subtle to humans but hostile to automation
+              // Consistent visual styling requires human verification
               background: isReal ? '#3b82f6' : '#3b82f6',
               color: '#fff',
               border: '1px solid #0f172a',

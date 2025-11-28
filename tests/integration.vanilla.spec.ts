@@ -22,15 +22,19 @@ describe('Vanilla integration', () => {
     (buttons[0] as HTMLButtonElement).click();
     expect(fakeClicked).toBe(1);
 
-    // CookieHell
-    makeCookieHell();
-    const accept = Array.from(document.querySelectorAll('button'))
+    // CookieHell - now needs a container
+    const cookieContainer = document.createElement('div');
+    document.body.appendChild(cookieContainer);
+    let acceptCalled = false;
+    makeCookieHell({
+      container: cookieContainer,
+      onAcceptAll: () => { acceptCalled = true; }
+    });
+    const accept = Array.from(cookieContainer.querySelectorAll('button'))
       .find((b) => b.textContent?.toLowerCase() === 'accept all');
     expect(accept).toBeTruthy();
     (accept as HTMLButtonElement).click();
-    // Overlay should be removed
-    const overlay = Array.from(document.body.children).find((el) => el.getAttribute('role') === 'dialog');
-    expect(overlay).toBeUndefined();
+    expect(acceptCalled).toBe(true);
   });
 });
 

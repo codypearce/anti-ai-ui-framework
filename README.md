@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/anti-ai-ui.svg)](https://www.npmjs.com/package/anti-ai-ui)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)](https://www.typescriptlang.org/)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/yourusername/anti-ai-ui/ci.yml?branch=main)](https://github.com/yourusername/anti-ai-ui/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/codypearce/anti-ai-ui-framework/ci.yml?branch=main)](https://github.com/codypearce/anti-ai-ui-framework/actions)
 
 **The industry-standard framework for building automation-resistant user interfaces.**
 
@@ -93,27 +93,68 @@ export default function App() {
 
 ## Components (React)
 
-- RunawayButton: `speed?`, `evasionDistance?`, `jitter?`, `onCatch?`, `className?`, `style?`
-- FakeDownloadGrid: `rows?`, `cols?`, `realButtonIndex?`, `labels?`, `onRealClick?`, `onFakeClick?`
-- CookieHell: `depth?`, `toggleCount?`, `rejectButtonSize?`, `onAcceptAll?`, `onRejectAll?`, `onClose?`
-- PopupChaos: `popupCount?`, `closeOrder?`, `onAllClosed?`
-- PasswordHell: `requirementChangeInterval?`, `onSubmit?`, `rules?`, `freezeRules?`
-- ShiftingInterface: `shiftInterval?`, `duplicateChance?`, `colorChangeInterval?`
-- SemanticGaslighting: `buttons`, `onSubmit?`, `onCancel?`, `onReset?`, `onAction?`
-- MitosisButton: `maxClones?`, `initialClones?`, `realStartsRandom?`, `shuffleIntervalMs?`, `decayMs?`, `realIndexStrategy?`, `onRealClick?`, `onFakeClick?`, `className?`, `style?`
+### Interaction Components
+- **RunawayButton** - Button that evades cursor interaction
+- **MitosisButton** - Button that splits into multiple buttons when clicked
+- **GravityField** - Interactive field where elements respond to cursor proximity
+
+### Form Components
+- **PasswordHell** - Password input with dynamic validation requirements
+- **FormChaos** - Form with rotation and scale transformations
+- **MarqueeInputs** - Input fields that move while typing
+- **LabelPositionSwap** - Labels that periodically swap positions
+- **ShiftingInterface** - Elements that randomly shift positions
+- **TabIndexRandomization** - Randomized tab navigation order
+- **ThreeFormCarousel** - Rotating carousel of forms
+
+### Overlay Components
+- **CookieHell** - Nested cookie consent banners
+- **PopupChaos** - Multiple popups requiring ordered dismissal
+- **FloatingBannerAds** - Moving banner elements
+- **RandomFakeErrors** - Periodic error message displays
+
+### Visual Components
+- **FakeDownloadGrid** - Grid with one real button among decoys
+- **GlitchText** - Text cycling through visual variations
+- **OpacityFlash** - Elements with flashing opacity
+- **MicroscopicCloseButton** - Precision-requiring close buttons
+- **FakeMarqueeFields** - Scrolling input field displays
+
+### Semantic Components
+- **SemanticGaslighting** - Buttons with mismatched labels and actions
 
 See `src/types` or `anti-ai-ui/types` subpath for full TypeScript types.
 
 ## Vanilla APIs
 
-- makeButtonRunaway(el, opts)
-- makeFakeDownloadGrid(container, opts)
-- makeCookieHell(opts)
-- makePopupChaos(opts)
-- makePasswordHell(container, opts)
-- makeShiftingInterface(container, opts)
-- makeSemanticGaslighting(container, opts)
-- makeMitosisButton(buttonEl, opts)
+All React components have corresponding vanilla JavaScript implementations:
+
+```typescript
+import {
+  createRunawayButton,
+  createCookieHell,
+  createFakeDownloadGrid,
+  createPasswordHell,
+  createPopupChaos,
+  createShiftingInterface,
+  createSemanticGaslighting,
+  createMitosisButton,
+  createMarqueeInputs,
+  createFormChaos,
+  createGlitchText,
+  createGravityField,
+  createLabelPositionSwap,
+  createOpacityFlash,
+  createFloatingBannerAds,
+  createFakeMarqueeFields,
+  createMicroscopicCloseButton,
+  createTabIndexRandomization,
+  createThreeFormCarousel,
+  createRandomFakeErrors,
+} from 'anti-ai-ui/vanilla';
+```
+
+Each function returns a cleanup function to remove event listeners and DOM elements.
 
 ## Bot Detection Utilities
 

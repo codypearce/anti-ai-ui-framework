@@ -29,16 +29,6 @@ describe('CookieHell (React)', () => {
     expect(onRejectAll).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onClose when Accept All is clicked', () => {
-    const onClose = vi.fn();
-    const { container } = render(<CookieHell depth={1} toggleCount={2} onClose={onClose} />);
-
-    const acceptButton = container.querySelector('button');
-    fireEvent.click(acceptButton!);
-
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
   it('renders multiple toggles', () => {
     const { container } = render(<CookieHell depth={1} toggleCount={4} />);
 
@@ -55,16 +45,56 @@ describe('CookieHell (React)', () => {
     expect(rejectButton!.style.height).not.toBe('');
   });
 
-  it('renders with minimal configuration and closes on accept', () => {
-    const { container } = render(<CookieHell depth={1} toggleCount={1} />);
+  it('renders with custom className', () => {
+    const { container } = render(<CookieHell depth={1} toggleCount={1} className="custom-cookie" />);
 
-    const dialog = container.querySelector('[role="dialog"]');
-    expect(dialog).toBeTruthy();
+    const wrapper = container.querySelector('.custom-cookie');
+    expect(wrapper).toBeTruthy();
+  });
 
+  it('renders with custom style', () => {
+    const { container } = render(
+      <CookieHell
+        depth={1}
+        toggleCount={1}
+        style={{ backgroundColor: 'red', padding: '20px' }}
+      />
+    );
+
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.style.backgroundColor).toBe('red');
+    expect(wrapper.style.padding).toBe('20px');
+  });
+
+  it('renders custom children content', () => {
+    const { container } = render(
+      <CookieHell depth={1} toggleCount={1}>
+        <div data-testid="custom-header">Custom Header</div>
+      </CookieHell>
+    );
+
+    const customHeader = container.querySelector('[data-testid="custom-header"]');
+    expect(customHeader).toBeTruthy();
+    expect(customHeader?.textContent).toBe('Custom Header');
+  });
+
+  it('still renders toggles and buttons with custom children', () => {
+    const { container } = render(
+      <CookieHell depth={1} toggleCount={2}>
+        <h2>Custom Title</h2>
+      </CookieHell>
+    );
+
+    // Should have custom content
+    const h2 = container.querySelector('h2');
+    expect(h2?.textContent).toBe('Custom Title');
+
+    // Should still have toggles
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    expect(checkboxes.length).toBeGreaterThan(0);
+
+    // Should still have buttons
     const acceptButton = container.querySelector('button');
-    fireEvent.click(acceptButton!);
-
-    // Dialog should be removed after accept
-    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(acceptButton?.textContent).toBe('Accept All');
   });
 });
