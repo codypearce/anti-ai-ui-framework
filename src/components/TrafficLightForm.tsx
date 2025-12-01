@@ -99,6 +99,11 @@ export interface TrafficLightFormProps {
   onChange?: (values: Record<string, string>) => void;
 
   /**
+   * Callback when a field's light state changes
+   */
+  onStateChange?: (fieldIndex: number, state: LightState) => void;
+
+  /**
    * Custom content. Can be either:
    * - A render function that receives props to build your own form UI
    * - Regular React children for static content
@@ -163,6 +168,7 @@ export function TrafficLightForm({
   greenDuration = { min: 1500, max: 3000 },
   yellowDuration = 500,
   onChange,
+  onStateChange,
   children,
   className,
   style,
@@ -199,6 +205,7 @@ export function TrafficLightForm({
         next[index] = { ...next[index], state: 'red' };
         return next;
       });
+      onStateChange?.(index, 'red');
 
       setTimeout(() => {
         if (!activeRef.current) return;
@@ -209,6 +216,7 @@ export function TrafficLightForm({
           next[index] = { ...next[index], state: 'yellow' };
           return next;
         });
+        onStateChange?.(index, 'yellow');
 
         setTimeout(() => {
           if (!activeRef.current) return;
@@ -219,6 +227,7 @@ export function TrafficLightForm({
             next[index] = { ...next[index], state: 'green' };
             return next;
           });
+          onStateChange?.(index, 'green');
 
           // Focus the input (only in default mode)
           if (!children) {

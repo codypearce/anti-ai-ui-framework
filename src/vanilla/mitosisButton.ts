@@ -11,6 +11,8 @@ export interface MitosisOptions {
   container?: HTMLElement; // defaults to element.parentElement or body
   initialClones?: number; // initial decoys to spawn on init
   shuffleIntervalMs?: number; // how often to reassign real index (0 = disabled)
+  driftSpeed?: number; // speed of button drift (0 = no movement, 0.15 = default)
+  autoSpawnInterval?: number; // auto-spawn buttons at this interval in ms (0 = disabled)
   onRealClick?: () => void;
   onFakeClick?: (index: number) => void;
 }
@@ -18,6 +20,16 @@ export interface MitosisOptions {
 interface CloneItem {
   el: HTMLButtonElement;
   createdAt: number;
+  vx: number;
+  vy: number;
+}
+
+function randomVelocity(speed: number): { vx: number; vy: number } {
+  const angle = Math.random() * Math.PI * 2;
+  return {
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+  };
 }
 
 export function makeMitosisButton(element: HTMLButtonElement, opts: MitosisOptions = {}) {
@@ -29,6 +41,8 @@ export function makeMitosisButton(element: HTMLButtonElement, opts: MitosisOptio
     container: opts.container ?? (element.parentElement as HTMLElement | null) ?? document.body,
     initialClones: opts.initialClones ?? 0,
     shuffleIntervalMs: opts.shuffleIntervalMs ?? 0,
+    driftSpeed: opts.driftSpeed ?? 0.15,
+    autoSpawnInterval: opts.autoSpawnInterval ?? 1200,
     onRealClick: opts.onRealClick ?? (() => {}),
     onFakeClick: opts.onFakeClick ?? (() => {}),
   };
@@ -74,6 +88,7 @@ export function makeMitosisButton(element: HTMLButtonElement, opts: MitosisOptio
   function addClone() {
     if (clones.length >= options.maxClones) return;
     const pos = randomPosition({ minX: 10, maxX: 90, minY: 10, maxY: 90 });
+    const vel = randomVelocity(options.driftSpeed);
     const btn = document.createElement('button');
     btn.type = 'button';
     // Inherit classes and inline styles so clones look identical to the seed
@@ -90,7 +105,7 @@ export function makeMitosisButton(element: HTMLButtonElement, opts: MitosisOptio
     const idx = clones.length + 1; // position index for this button in [seed, ...clonesNew]
     btn.addEventListener('click', () => handleClick(idx));
 
-    clones.push({ el: btn, createdAt: Date.now() });
+    clones.push({ el: btn, createdAt: Date.now(), vx: vel.vx, vy: vel.vy });
   }
 
   function handleClick(index: number) {
@@ -145,10 +160,48 @@ export function makeMitosisButton(element: HTMLButtonElement, opts: MitosisOptio
     }
   }, options.shuffleIntervalMs) : undefined;
 
+  // Drift animation loop
+  let driftAnimationId: number | undefined;
+  if (options.driftSpeed > 0) {
+    const animate = () => {
+      for (const clone of clones) {
+        let x = parseFloat(clone.el.style.left) || 50;
+        let y = parseFloat(clone.el.style.top) || 50;
+        x += clone.vx;
+        y += clone.vy;
+        // Bounce off edges
+        if (x <= 5 || x >= 95) {
+          clone.vx *= -1;
+          x = Math.max(5, Math.min(95, x));
+        }
+        if (y <= 5 || y >= 95) {
+          clone.vy *= -1;
+          y = Math.max(5, Math.min(95, y));
+        }
+        clone.el.style.left = `${x}%`;
+        clone.el.style.top = `${y}%`;
+      }
+      driftAnimationId = requestAnimationFrame(animate);
+    };
+    driftAnimationId = requestAnimationFrame(animate);
+  }
+
+  // Auto-spawn interval
+  const autoSpawnIntervalId = options.autoSpawnInterval > 0 ? window.setInterval(() => {
+    if (clones.length < options.maxClones) {
+      addClone();
+      const total = clones.length + 1;
+      realIndex = pickNextRealIndex(realIndex, total);
+      markReal();
+    }
+  }, options.autoSpawnInterval) : undefined;
+
   return function cleanup() {
     element.replaceWith(element.cloneNode(true)); // remove listener by replacing node
     clones.forEach((c) => c.el.remove());
     if (decayInterval) window.clearInterval(decayInterval);
     if (shuffleInterval) window.clearInterval(shuffleInterval);
+    if (driftAnimationId) cancelAnimationFrame(driftAnimationId);
+    if (autoSpawnIntervalId) window.clearInterval(autoSpawnIntervalId);
   };
 }

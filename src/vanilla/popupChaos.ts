@@ -13,6 +13,14 @@ export interface PopupChaosOptions {
   onAllClosed?: () => void;
   onWrongClose?: (attemptedId: number, expectedId: number) => void;
   renderPopup?: (popup: PopupData, closePopup: () => void, isDenied: boolean) => HTMLElement;
+  /**
+   * If true, popups are contained within a relative container instead of fixed to viewport.
+   */
+  contained?: boolean;
+  /**
+   * Container element to append popups to. Required when contained is true.
+   */
+  container?: HTMLElement;
 }
 
 export interface PopupChaosAPI {
@@ -82,11 +90,23 @@ export function makePopupChaos(options: PopupChaosOptions = {}): PopupChaosAPI {
     }
   }
 
+  function getPosition(popup: PopupData): { left: string; top: string } {
+    if (options.contained) {
+      // Scale positions to fit within container (assume max left: 340, max top: 160 from hook)
+      // Convert to percentages: left 0-60%, top 0-40%
+      const leftPercent = (popup.left / 340) * 60;
+      const topPercent = (popup.top / 160) * 40;
+      return { left: `${leftPercent}%`, top: `${topPercent}%` };
+    }
+    return { left: `${popup.left}px`, top: `${popup.top}px` };
+  }
+
   function renderDefaultPopup(popup: PopupData, close: () => void, denied: boolean): HTMLElement {
+    const pos = getPosition(popup);
     const wrap = document.createElement('div');
     wrap.style.position = 'absolute';
-    wrap.style.left = `${popup.left}px`;
-    wrap.style.top = `${popup.top}px`;
+    wrap.style.left = pos.left;
+    wrap.style.top = pos.top;
     wrap.style.zIndex = `${popup.zIndex}`;
     wrap.style.width = '280px';
     wrap.style.pointerEvents = 'auto';
@@ -135,21 +155,40 @@ export function makePopupChaos(options: PopupChaosOptions = {}): PopupChaosAPI {
         popupElements.set(popup.id, elem);
       }
     } else {
-      // Default rendering with fixed overlay
-      const overlay = document.createElement('div');
-      overlay.style.position = 'fixed';
-      overlay.style.inset = '0';
-      overlay.style.pointerEvents = 'none';
-      overlay.style.zIndex = '9998';
+      // Default rendering
+      if (options.contained && options.container) {
+        // Contained mode - render inside provided container
+        const containerEl = options.container;
+        if (getComputedStyle(containerEl).position === 'static') {
+          containerEl.style.position = 'relative';
+        }
+        containerEl.style.minHeight = '300px';
+        containerEl.style.overflow = 'hidden';
 
-      for (const popup of popupData) {
-        const elem = renderDefaultPopup(popup, () => closePopupById(popup.id), false);
-        popupElements.set(popup.id, elem);
-        overlay.appendChild(elem);
+        for (const popup of popupData) {
+          const elem = renderDefaultPopup(popup, () => closePopupById(popup.id), false);
+          elem.style.maxWidth = '45%';
+          popupElements.set(popup.id, elem);
+          containerEl.appendChild(elem);
+        }
+        container = containerEl;
+      } else {
+        // Fixed overlay mode
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.zIndex = '9998';
+
+        for (const popup of popupData) {
+          const elem = renderDefaultPopup(popup, () => closePopupById(popup.id), false);
+          popupElements.set(popup.id, elem);
+          overlay.appendChild(elem);
+        }
+
+        document.body.appendChild(overlay);
+        container = overlay;
       }
-
-      document.body.appendChild(overlay);
-      container = overlay;
     }
   }
 

@@ -1,4 +1,12 @@
 /**
+ * Props for rendering a button
+ */
+export interface RenderButtonProps {
+  onClick: () => void;
+  index: number;
+}
+
+/**
  * Options for creating a microscopic close button
  */
 export interface MicroscopicCloseButtonOptions {
@@ -22,6 +30,16 @@ export interface MicroscopicCloseButtonOptions {
    * @default 5
    */
   fakeButtonCount?: number;
+
+  /**
+   * Custom render function for the real close button
+   */
+  renderRealButton?: (props: RenderButtonProps) => HTMLElement;
+
+  /**
+   * Custom render function for fake close buttons
+   */
+  renderFakeButton?: (props: RenderButtonProps) => HTMLElement;
 }
 
 /**
@@ -186,42 +204,52 @@ export function createMicroscopicCloseButton(
   ];
 
   // Create fake buttons
-  fakeButtonConfigs.slice(0, fakeButtonCount).forEach(config => {
-    const btn = createFakeButton(config.styles, config.text);
+  fakeButtonConfigs.slice(0, fakeButtonCount).forEach((config, index) => {
+    let btn: HTMLElement;
+    if (options.renderFakeButton) {
+      btn = options.renderFakeButton({ onClick: () => onFakeClose?.(), index });
+    } else {
+      btn = createFakeButton(config.styles, config.text);
+    }
     container.appendChild(btn);
-    createdButtons.push(btn);
+    createdButtons.push(btn as HTMLButtonElement);
   });
 
   // Create REAL close button (4×4px)
-  const realButton = document.createElement('button');
-  realButton.setAttribute('aria-label', 'Close');
-  Object.assign(realButton.style, {
-    position: 'absolute',
-    top: '8px',
-    right: '8px',
-    width: '4px',
-    height: '4px',
-    background: 'rgba(100, 100, 100, 0.3)',
-    border: 'none',
-    cursor: 'pointer',
-    zIndex: '60',
-    fontSize: '0',
-    padding: '0',
-    transition: 'all 0.2s ease',
-  });
+  let realButton: HTMLElement;
+  if (options.renderRealButton) {
+    realButton = options.renderRealButton({ onClick: () => onRealClose?.(), index: 0 });
+  } else {
+    realButton = document.createElement('button');
+    realButton.setAttribute('aria-label', 'Close');
+    Object.assign(realButton.style, {
+      position: 'absolute',
+      top: '8px',
+      right: '8px',
+      width: '4px',
+      height: '4px',
+      background: 'rgba(100, 100, 100, 0.3)',
+      border: 'none',
+      cursor: 'pointer',
+      zIndex: '60',
+      fontSize: '0',
+      padding: '0',
+      transition: 'all 0.2s ease',
+    });
 
-  realButton.addEventListener('mouseenter', () => {
-    realButton.style.background = 'rgba(100, 100, 100, 0.5)';
-  });
-  realButton.addEventListener('mouseleave', () => {
-    realButton.style.background = 'rgba(100, 100, 100, 0.3)';
-  });
-  realButton.addEventListener('click', () => {
-    onRealClose?.();
-  });
+    realButton.addEventListener('mouseenter', () => {
+      realButton.style.background = 'rgba(100, 100, 100, 0.5)';
+    });
+    realButton.addEventListener('mouseleave', () => {
+      realButton.style.background = 'rgba(100, 100, 100, 0.3)';
+    });
+    realButton.addEventListener('click', () => {
+      onRealClose?.();
+    });
+  }
 
   container.appendChild(realButton);
-  createdButtons.push(realButton);
+  createdButtons.push(realButton as HTMLButtonElement);
 
   // Cleanup function
   return () => {

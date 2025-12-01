@@ -111,6 +111,31 @@ const DEFAULT_AD_MESSAGES = [
   "You're a Winner!",
 ];
 
+const AD_STYLES: React.CSSProperties[] = [
+  // Classic spam banner
+  { background: 'linear-gradient(135deg, #ff0000, #cc0000)', color: '#ffff00', border: '3px dashed #ffff00', fontSize: '14px', padding: '12px 20px', borderRadius: '0' },
+  // Fake virus alert
+  { background: '#1a1a2e', color: '#ff4444', border: '2px solid #ff4444', fontSize: '12px', padding: '10px 14px', borderRadius: '4px', fontFamily: 'monospace' },
+  // Flashy winner
+  { background: 'linear-gradient(45deg, #ffd700, #ff8c00, #ffd700)', color: '#000', border: '3px solid #8b4513', fontSize: '15px', padding: '14px 22px', borderRadius: '8px', textShadow: '1px 1px 0 #fff' },
+  // Dating site pink
+  { background: 'linear-gradient(135deg, #ff69b4, #ff1493)', color: '#fff', border: '2px solid #fff', fontSize: '13px', padding: '10px 16px', borderRadius: '20px' },
+  // Fake download button
+  { background: 'linear-gradient(180deg, #5cb85c, #449d44)', color: '#fff', border: '1px solid #398439', fontSize: '14px', padding: '12px 24px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '1px' },
+  // Urgent red box
+  { background: '#fff', color: '#cc0000', border: '4px solid #cc0000', fontSize: '13px', padding: '10px 16px', borderRadius: '0', textTransform: 'uppercase' },
+  // Neon cyber
+  { background: '#0d0d0d', color: '#0ff', border: '2px solid #0ff', fontSize: '12px', padding: '10px 14px', borderRadius: '2px', textShadow: '0 0 10px #0ff', fontFamily: 'monospace' },
+];
+
+const AD_ANIMATIONS = [
+  'adPulse 0.3s ease-in-out infinite alternate',
+  'adShake 0.15s ease-in-out infinite',
+  'adBounce 0.5s ease-in-out infinite',
+  'adGlow 1s ease-in-out infinite',
+  'none',
+];
+
 /**
  * FloatingBannerAds component that spawns fake ads at random positions.
  *
@@ -227,20 +252,20 @@ export function FloatingBannerAds({
     ...style,
   };
 
-  const defaultAdStyle: React.CSSProperties = {
-    position: 'absolute',
-    background: 'linear-gradient(135deg, #ff0080, #ff8c00)',
-    color: 'white',
-    padding: '12px 20px',
-    borderRadius: '8px',
-    fontWeight: 'bold',
-    fontSize: '14px',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-    zIndex: 1000,
-    animation: 'pulse 0.5s ease-in-out',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    ...adStyle,
+  const getAdStyle = (adId: number): React.CSSProperties => {
+    const randomStyle = AD_STYLES[adId % AD_STYLES.length];
+    const randomAnimation = AD_ANIMATIONS[adId % AD_ANIMATIONS.length];
+    return {
+      position: 'absolute',
+      fontWeight: 'bold',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+      zIndex: 1000,
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      ...randomStyle,
+      animation: randomAnimation,
+      ...adStyle,
+    };
   };
 
   const defaultRenderAd = ({ ad, style: adStyles }: RenderAdProps) => (
@@ -254,18 +279,22 @@ export function FloatingBannerAds({
   return (
     <>
       <style>{`
-        @keyframes pulse {
-          0% {
-            transform: scale(0.8);
-            opacity: 0;
-          }
-          50% {
-            transform: scale(1.05);
-          }
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
+        @keyframes adPulse {
+          from { transform: scale(1); }
+          to { transform: scale(1.05); }
+        }
+        @keyframes adShake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-3px); }
+          75% { transform: translateX(3px); }
+        }
+        @keyframes adBounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
+        @keyframes adGlow {
+          0%, 100% { box-shadow: 0 0 5px currentColor; }
+          50% { box-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
         }
       `}</style>
       <div className={className} style={containerStyle}>
@@ -274,7 +303,7 @@ export function FloatingBannerAds({
             {adRenderer({
               ad,
               style: {
-                ...defaultAdStyle,
+                ...getAdStyle(ad.id),
                 left: `${ad.x}%`,
                 top: `${ad.y}%`,
               },

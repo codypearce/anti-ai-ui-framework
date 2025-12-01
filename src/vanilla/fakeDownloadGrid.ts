@@ -1,5 +1,10 @@
 import { componentLoggers } from '../utils/logger';
 
+export interface RenderButtonProps {
+  onClick: (ev: MouseEvent) => void;
+  index: number;
+}
+
 export interface FakeDownloadGridOptions {
   /** Number of fake buttons to display (real button is always included) */
   buttonCount?: number;
@@ -7,6 +12,10 @@ export interface FakeDownloadGridOptions {
   onRealClick?: (ev: MouseEvent) => void;
   /** Callback when a fake button is clicked */
   onFakeClick?: (ev: MouseEvent) => void;
+  /** Custom render function for the real download button */
+  renderRealButton?: (props: RenderButtonProps) => HTMLElement;
+  /** Custom render function for fake download buttons */
+  renderFakeButton?: (props: RenderButtonProps) => HTMLElement;
 }
 
 type ButtonConfig = {
@@ -305,7 +314,28 @@ export function makeFakeDownloadGrid(
     }
   };
 
-  // Render buttons
+  // If custom renderers provided, use simple grid layout
+  if (options.renderRealButton || options.renderFakeButton) {
+    let fakeIndex = 0;
+    selected.forEach((config, index) => {
+      let element: HTMLElement;
+      if (config.isReal && options.renderRealButton) {
+        element = options.renderRealButton({ onClick: handleClick(config), index });
+      } else if (!config.isReal && options.renderFakeButton) {
+        element = options.renderFakeButton({ onClick: handleClick(config), index: fakeIndex++ });
+      } else {
+        element = config.create(handleClick(config));
+      }
+      container.appendChild(element);
+    });
+    return {
+      destroy() {
+        container.innerHTML = '';
+      },
+    };
+  }
+
+  // Render buttons with default styling
   const processed = new Set<string>();
   let elementCount = 0;
 
