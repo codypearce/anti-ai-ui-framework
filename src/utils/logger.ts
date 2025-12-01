@@ -119,7 +119,7 @@ export const componentLoggers = {
   mitosisButton: createLogger('MitosisButton'),
   threeFormCarousel: createLogger('ThreeFormCarousel'),
   tabIndexRandomization: createLogger('TabIndexRandomization'),
-  randomFakeErrors: createLogger('RandomFakeErrors'),
+  trafficLightForm: createLogger('TrafficLightForm'),
   fakeMarqueeFields: createLogger('FakeMarqueeFields'),
   formChaos: createLogger('FormChaos'),
   glitchText: createLogger('GlitchText'),
@@ -128,6 +128,7 @@ export const componentLoggers = {
   opacityFlash: createLogger('OpacityFlash'),
   marqueeInputs: createLogger('MarqueeInputs'),
   gravityField: createLogger('GravityField'),
+  pendulumFields: createLogger('PendulumFields'),
 };
 
 /**

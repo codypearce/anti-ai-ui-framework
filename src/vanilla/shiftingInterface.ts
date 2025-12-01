@@ -58,14 +58,29 @@ export function makeShiftingInterface(container: HTMLElement, options: ShiftingI
   const existingChildren = Array.from(container.children);
   container.innerHTML = ''; // Clear container
 
+  // Get initial dimensions for positioning
+  const initialDims = getContainerDimensions();
+  const itemWidth = Math.min(300, initialDims.width * 0.6);
+
   existingChildren.forEach((child, index) => {
     const wrapper = document.createElement('div');
     wrapper.style.position = 'absolute';
-    wrapper.style.left = '30px';
-    wrapper.style.top = `${30 + index * 50}px`;
+
+    // Center items horizontally, stack vertically with spacing
+    const leftPos = (initialDims.width - itemWidth) / 2;
+    const topPos = 20 + index * 70;
+
+    wrapper.style.left = `${leftPos}px`;
+    wrapper.style.top = `${topPos}px`;
+    wrapper.style.width = `${itemWidth}px`;
     wrapper.style.transition = 'left 200ms linear, top 200ms linear';
 
     const clonedChild = child.cloneNode(true) as HTMLElement;
+    // Make inputs/buttons take full width of wrapper
+    if (clonedChild.tagName === 'INPUT' || clonedChild.tagName === 'BUTTON') {
+      clonedChild.style.width = '100%';
+      clonedChild.style.boxSizing = 'border-box';
+    }
     wrapper.appendChild(clonedChild);
     container.appendChild(wrapper);
 
@@ -73,8 +88,8 @@ export function makeShiftingInterface(container: HTMLElement, options: ShiftingI
       wrapper,
       contentElement: clonedChild,
       id: `item-${index}`,
-      left: 30,
-      top: 30 + index * 50,
+      left: leftPos,
+      top: topPos,
       colorIndex: index % colors.length,
     });
   });
@@ -105,6 +120,7 @@ export function makeShiftingInterface(container: HTMLElement, options: ShiftingI
     wrapper.style.position = 'absolute';
     wrapper.style.left = `${baseItem.left + 20}px`;
     wrapper.style.top = `${baseItem.top + 10}px`;
+    wrapper.style.width = baseItem.wrapper.style.width;
     wrapper.style.transition = 'left 200ms linear, top 200ms linear';
 
     const clonedContent = baseItem.contentElement.cloneNode(true) as HTMLElement;
@@ -153,6 +169,9 @@ export function makeShiftingInterface(container: HTMLElement, options: ShiftingI
   items.forEach((it) => {
     applyColorToElement(it.contentElement, colors[it.colorIndex]);
   });
+
+  // Show container after processing (in case it was hidden to prevent flash)
+  container.style.visibility = 'visible';
 
   return {
     destroy() {

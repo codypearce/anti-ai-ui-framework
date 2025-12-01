@@ -12,6 +12,16 @@ export interface FloatingAd {
 }
 
 /**
+ * Props passed to renderAd function
+ */
+export interface RenderAdProps {
+  /** The ad data */
+  ad: FloatingAd;
+  /** Default styles for the ad (position already applied) */
+  style: React.CSSProperties;
+}
+
+/**
  * Props for the FloatingBannerAds component
  */
 export interface FloatingBannerAdsProps {
@@ -58,9 +68,14 @@ export interface FloatingBannerAdsProps {
   maxY?: number;
 
   /**
-   * Custom render function for ads
+   * Custom render function for all ads (full control)
    */
   children?: (ads: FloatingAd[]) => React.ReactNode;
+
+  /**
+   * Custom render function for individual ads
+   */
+  renderAd?: (props: RenderAdProps) => React.ReactNode;
 
   /**
    * Custom CSS class for the container
@@ -147,6 +162,7 @@ export function FloatingBannerAds({
   minY = 20,
   maxY = 80,
   children,
+  renderAd,
   className,
   style,
   adClassName,
@@ -220,6 +236,14 @@ export function FloatingBannerAds({
     ...adStyle,
   };
 
+  const defaultRenderAd = ({ ad, style: adStyles }: RenderAdProps) => (
+    <div className={adClassName} style={adStyles}>
+      {ad.text}
+    </div>
+  );
+
+  const adRenderer = renderAd ?? defaultRenderAd;
+
   return (
     <>
       <style>{`
@@ -239,17 +263,16 @@ export function FloatingBannerAds({
       `}</style>
       <div className={className} style={containerStyle}>
         {ads.map((ad) => (
-          <div
-            key={ad.id}
-            className={adClassName}
-            style={{
-              ...defaultAdStyle,
-              left: `${ad.x}%`,
-              top: `${ad.y}%`,
-            }}
-          >
-            {ad.text}
-          </div>
+          <React.Fragment key={ad.id}>
+            {adRenderer({
+              ad,
+              style: {
+                ...defaultAdStyle,
+                left: `${ad.x}%`,
+                top: `${ad.y}%`,
+              },
+            })}
+          </React.Fragment>
         ))}
       </div>
     </>

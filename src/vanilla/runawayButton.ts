@@ -1,86 +1,93 @@
-import { constrainToBounds, type Position } from '../utils/randomPosition';
-import {
-  calculateEvasion,
-  addEvasionJitter,
-  isElementCornered,
-  calculateEscapeRoute,
-} from '../utils/evasionLogic';
 import { componentLoggers } from '../utils/logger';
 
 export interface RunawayOptions {
-  speed?: number;
+  /** Distance in pixels at which evasion triggers */
   evasionDistance?: number;
-  jitter?: number;
-  container?: HTMLElement; // defaults to element.parentElement
+  /** How far to move when evading (pixels) */
+  escapeDistance?: number;
+  /** Container element - defaults to element.parentElement */
+  container?: HTMLElement;
+  /** Called when user clicks the button */
+  onCatch?: () => void;
 }
 
 export function makeButtonRunaway(element: HTMLElement, options: RunawayOptions = {}) {
-  const speed = options.speed ?? 1;
   const evasionDistance = options.evasionDistance ?? 120;
-  const jitter = options.jitter ?? 6;
+  const escapeDistance = options.escapeDistance ?? 80;
   const container = options.container ?? (element.parentElement as HTMLElement | null) ?? document.body;
+  const onCatch = options.onCatch;
   const logger = componentLoggers.runawayButton;
 
-
-  // Ensure positioning
+  // Ensure container has relative positioning
   if (getComputedStyle(container).position === 'static') {
     container.style.position = 'relative';
   }
-  const initialPositioning = getComputedStyle(element).position;
-  if (initialPositioning === 'static') {
-    element.style.position = 'absolute';
+  container.style.overflow = 'hidden';
+
+  // Style element for smooth movement
+  element.style.position = 'absolute';
+  element.style.transform = 'translate(-50%, -50%)';
+  element.style.transition = 'left 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
+  element.style.userSelect = 'none';
+
+  function setPosition(x: number, y: number) {
+    element.style.left = `${x}%`;
+    element.style.top = `${y}%`;
   }
 
-  // Initialize position roughly centered
-  const cRect = container.getBoundingClientRect();
-  const eRect = element.getBoundingClientRect();
-  let pos: Position = {
-    x: Math.max(0, (cRect.width - eRect.width) / 2),
-    y: Math.max(0, (cRect.height - eRect.height) / 2),
-  };
-  element.style.left = `${pos.x}px`;
-  element.style.top = `${pos.y}px`;
+  // Initialize centered
+  setPosition(50, 50);
 
   function onMouseMove(ev: MouseEvent) {
     const cRect = container.getBoundingClientRect();
+    const mouseX = ev.clientX - cRect.left;
+    const mouseY = ev.clientY - cRect.top;
+
+    // Get button center position
     const eRect = element.getBoundingClientRect();
-    const threat: Position = { x: ev.clientX - cRect.left, y: ev.clientY - cRect.top };
+    const btnCenterX = eRect.left + eRect.width / 2 - cRect.left;
+    const btnCenterY = eRect.top + eRect.height / 2 - cRect.top;
 
-    const result = calculateEvasion(
-      { x: pos.x + eRect.width / 2, y: pos.y + eRect.height / 2 },
-      threat,
-      { evasionDistance, speed }
-    );
+    // Calculate distance from mouse to button
+    const dx = mouseX - btnCenterX;
+    const dy = mouseY - btnCenterY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
 
-    if (result.shouldEvade && result.newPosition) {
-      let next: Position = {
-        x: result.newPosition.x - eRect.width / 2,
-        y: result.newPosition.y - eRect.height / 2,
-      };
+    // If mouse is too close, move button away
+    if (distance < evasionDistance) {
+      // Calculate escape direction (opposite to mouse)
+      const angle = Math.atan2(dy, dx);
+      const escapeX = btnCenterX - Math.cos(angle) * escapeDistance;
+      const escapeY = btnCenterY - Math.sin(angle) * escapeDistance;
 
-      if (isElementCornered(pos, cRect.width, cRect.height, 50)) {
-        const escape = calculateEscapeRoute(pos, cRect.width, cRect.height);
-        next = { x: escape.x, y: escape.y };
-      }
+      // Convert to percentage and constrain within bounds (15-85% to always have escape room)
+      const newX = Math.max(15, Math.min(85, (escapeX / cRect.width) * 100));
+      const newY = Math.max(15, Math.min(85, (escapeY / cRect.height) * 100));
 
-      next = addEvasionJitter(next, jitter);
-      const constrained = constrainToBounds(
-        next,
-        { minX: 0, minY: 0, maxX: Math.max(0, cRect.width - eRect.width), maxY: Math.max(0, cRect.height - eRect.height) }
-      );
+      setPosition(newX, newY);
+      logger.debug('Evading to', { x: newX, y: newY });
+    }
+  }
 
-      pos = constrained;
-      element.style.left = `${pos.x}px`;
-      element.style.top = `${pos.y}px`;
-
-      logger.debug('Evading to', constrained);
+  function onClick() {
+    if (onCatch) {
+      onCatch();
     }
   }
 
   container.addEventListener('mousemove', onMouseMove);
+  element.addEventListener('click', onClick);
 
   return function cleanup() {
     container.removeEventListener('mousemove', onMouseMove);
+    element.removeEventListener('click', onClick);
+    // Reset styles
+    element.style.position = '';
+    element.style.left = '';
+    element.style.top = '';
+    element.style.transform = '';
+    element.style.transition = '';
+    element.style.userSelect = '';
   };
 }
 

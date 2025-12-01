@@ -1,6 +1,23 @@
 import React from 'react';
 
 /**
+ * Props passed to renderRealButton
+ */
+export interface RenderRealButtonProps {
+  onClick: () => void;
+  style: React.CSSProperties;
+}
+
+/**
+ * Props passed to renderFakeButton
+ */
+export interface RenderFakeButtonProps {
+  onClick: () => void;
+  style: React.CSSProperties;
+  index: number;
+}
+
+/**
  * Props for the MicroscopicCloseButton component
  */
 export interface MicroscopicCloseButtonProps {
@@ -19,6 +36,16 @@ export interface MicroscopicCloseButtonProps {
    * @default 5
    */
   fakeButtonCount?: number;
+
+  /**
+   * Custom render function for the real close button
+   */
+  renderRealButton?: (props: RenderRealButtonProps) => React.ReactNode;
+
+  /**
+   * Custom render function for each fake close button
+   */
+  renderFakeButton?: (props: RenderFakeButtonProps) => React.ReactNode;
 
   /**
    * Custom CSS class for the button container
@@ -66,6 +93,8 @@ export function MicroscopicCloseButton({
   onRealClose,
   onFakeClose,
   fakeButtonCount = 5,
+  renderRealButton,
+  renderFakeButton,
   className,
   style,
   children,
@@ -170,56 +199,78 @@ export function MicroscopicCloseButton({
     },
   ];
 
+  // Default renderers
+  const defaultRenderFakeButton = ({ onClick, style: btnStyle, index }: RenderFakeButtonProps) => (
+    <button
+      onClick={onClick}
+      aria-label="Fake close button"
+      style={btnStyle}
+      onMouseEnter={(e) => {
+        const bg = btnStyle.background;
+        if (typeof bg === 'string' && bg.includes('rgba')) {
+          e.currentTarget.style.background = bg.replace(/0\.\d+/, '0.6');
+        } else {
+          e.currentTarget.style.background = '#e0e0e0';
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = btnStyle.background as string;
+      }}
+    >
+      {index < 3 ? '×' : ''}
+    </button>
+  );
+
+  const realButtonStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    width: '4px',
+    height: '4px',
+    background: 'rgba(100, 100, 100, 0.3)',
+    border: 'none',
+    cursor: 'pointer',
+    zIndex: 60,
+    fontSize: 0,
+    padding: 0,
+    transition: 'all 0.2s ease',
+  };
+
+  const defaultRenderRealButton = ({ onClick, style: btnStyle }: RenderRealButtonProps) => (
+    <button
+      onClick={onClick}
+      aria-label="Close"
+      style={btnStyle}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'rgba(100, 100, 100, 0.5)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'rgba(100, 100, 100, 0.3)';
+      }}
+    />
+  );
+
+  const fakeButtonRenderer = renderFakeButton ?? defaultRenderFakeButton;
+  const realButtonRenderer = renderRealButton ?? defaultRenderRealButton;
+
   return (
     <div className={className} style={{ position: 'relative', ...style }}>
       {/* Fake close buttons */}
       {fakeButtonStyles.slice(0, fakeButtonCount).map((btnStyle, idx) => (
-        <button
-          key={`fake-${idx}`}
-          onClick={handleFakeClose}
-          aria-label="Fake close button"
-          style={btnStyle}
-          onMouseEnter={(e) => {
-            const bg = btnStyle.background;
-            if (typeof bg === 'string' && bg.includes('rgba')) {
-              e.currentTarget.style.background = bg.replace(/0\.\d+/, '0.6');
-            } else {
-              e.currentTarget.style.background = '#e0e0e0';
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = btnStyle.background as string;
-          }}
-        >
-          {idx < 3 ? '×' : ''}
-        </button>
+        <React.Fragment key={`fake-${idx}`}>
+          {fakeButtonRenderer({
+            onClick: handleFakeClose,
+            style: btnStyle,
+            index: idx,
+          })}
+        </React.Fragment>
       ))}
 
       {/* REAL close button - 4×4 pixels, top right corner */}
-      <button
-        onClick={handleRealClose}
-        aria-label="Close"
-        style={{
-          position: 'absolute',
-          top: '8px',
-          right: '8px',
-          width: '4px',
-          height: '4px',
-          background: 'rgba(100, 100, 100, 0.3)',
-          border: 'none',
-          cursor: 'pointer',
-          zIndex: 60,
-          fontSize: 0,
-          padding: 0,
-          transition: 'all 0.2s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(100, 100, 100, 0.5)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(100, 100, 100, 0.3)';
-        }}
-      />
+      {realButtonRenderer({
+        onClick: handleRealClose,
+        style: realButtonStyle,
+      })}
 
       {/* User's content */}
       {children}

@@ -20,6 +20,16 @@ interface MarqueeElement {
 }
 
 /**
+ * Props passed to the renderField function
+ */
+export interface RenderFieldProps {
+  id: number;
+  label: string;
+  placeholder: string;
+  top: number;
+}
+
+/**
  * Props for the FakeMarqueeFields component
  */
 export interface FakeMarqueeFieldsProps {
@@ -60,9 +70,16 @@ export interface FakeMarqueeFieldsProps {
   contained?: boolean;
 
   /**
-   * Custom render function for each field
+   * Custom render function for each field.
+   * Use this to render your own field component.
    */
-  children?: (field: MarqueeElement) => React.ReactNode;
+  renderField?: (props: RenderFieldProps) => React.ReactNode;
+
+  /**
+   * Custom render function for each field (alias for renderField)
+   * @deprecated Use renderField instead
+   */
+  children?: (field: RenderFieldProps) => React.ReactNode;
 
   /**
    * Additional CSS class for the container
@@ -132,6 +149,7 @@ export function FakeMarqueeFields({
   minTop = 10,
   maxTop = 70,
   contained = true,
+  renderField: renderFieldProp,
   children,
   className,
   style,
@@ -179,10 +197,13 @@ export function FakeMarqueeFields({
     };
   }, [fields, spawnInterval, scrollDuration, minTop, maxTop, logger]);
 
+  // Use renderField prop or children (for backwards compatibility)
+  const customRender = renderFieldProp || children;
+
   // Default rendering
   const renderField = (element: MarqueeElement) => {
-    if (children) {
-      return children(element);
+    if (customRender) {
+      return customRender(element);
     }
 
     const fieldStyle: React.CSSProperties = {

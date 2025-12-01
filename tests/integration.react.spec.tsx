@@ -10,12 +10,13 @@ describe('React integration', () => {
     const onAcceptAll = vi.fn();
     const onAllClosed = vi.fn();
     const onReal = vi.fn();
+    const onFake = vi.fn();
 
     render(
       <div>
-        <CookieHell onAcceptAll={onAcceptAll} />
+        <CookieHell categoryCount={1} partnersPerCategory={1} onAcceptAll={onAcceptAll} />
         <PopupChaos popupCount={2} onAllClosed={onAllClosed} />
-        <FakeDownloadGrid rows={1} cols={3} realButtonIndex={1} onRealClick={onReal} />
+        <FakeDownloadGrid buttonCount={3} onRealClick={onReal} onFakeClick={onFake} />
       </div>
     );
 
@@ -38,11 +39,18 @@ describe('React integration', () => {
     expect(screen.queryAllByRole('button', { name: '✕' }).length).toBe(0);
     expect(onAllClosed).toHaveBeenCalled();
 
-    // FakeDownloadGrid real click at index 1
-    const allButtons = screen.getAllByRole('button');
-    const downloadButtons = allButtons.filter(btn => btn.textContent === 'DOWNLOAD');
-    fireEvent.click(downloadButtons[1]);
-    expect(onReal).toHaveBeenCalled();
+    // FakeDownloadGrid: click all remaining buttons (excluding Accept All which was already clicked)
+    // The buttons will include Accept All (already clicked), Save preferences, and the download buttons
+    const allButtonsAfterPopups = screen.getAllByRole('button');
+    // Filter to buttons that contain download-related text
+    const downloadButtons = allButtonsAfterPopups.filter(
+      (btn) =>
+        btn.textContent?.toLowerCase().includes('download') ||
+        btn.textContent?.includes('Mirror') ||
+        btn.textContent?.includes('FREE')
+    );
+    downloadButtons.forEach((btn) => fireEvent.click(btn));
+    expect(onReal).toHaveBeenCalledTimes(1);
+    expect(onFake.mock.calls.length).toBeGreaterThanOrEqual(1);
   });
 });
-

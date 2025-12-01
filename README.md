@@ -48,6 +48,14 @@ But can they handle the patterns we've been suffering through for decades?
 
 Everything humans have endured and some specifically created to frustrate AI browsers. Now available as React components and vanilla JS.
 
+<div align="center">
+  <img src="public/traffic-light-forms.gif" alt="Traffic Light Forms" width="500" /><br />
+  <strong>Traffic Light Forms</strong>
+  <br /><br />
+  <img src="public/three-form-carousel.gif" alt="Three-Form Carousel" width="500" /><br />
+  <strong>Three-Form Carousel</strong>
+</div>
+
 ---
 
 ## Install
@@ -128,15 +136,17 @@ createCookieHell({
 
 ### Forms
 
-| Component                 | Description                         |
-| ------------------------- | ----------------------------------- |
-| **PasswordHell**          | Validation requirements that evolve |
-| **FormChaos**             | Rotation and scale transformations  |
-| **MarqueeInputs**         | Fields that move while typing       |
-| **LabelPositionSwap**     | Labels that swap positions          |
-| **ShiftingInterface**     | Elements that shift randomly        |
-| **TabIndexRandomization** | Randomized tab order                |
-| **ThreeFormCarousel**     | Rotating form carousel              |
+| Component                 | Description                              |
+| ------------------------- | ---------------------------------------- |
+| **PasswordHell**          | Validation requirements that evolve      |
+| **FormChaos**             | Rotation and scale transformations       |
+| **LabelPositionSwap**     | Labels that shuffle between fields       |
+| **ShiftingInterface**     | Elements that shift randomly             |
+| **TabIndexRandomization** | Randomized tab order                     |
+| **ThreeFormCarousel**     | Rotating form carousel                   |
+| **TrafficLightForm**      | Fields only editable when "green"        |
+| **PendulumFields**        | Momentum-based fields that need activity |
+| **InputMisdirection**     | Input focus jumps to wrong field         |
 
 ### Overlays
 
@@ -144,18 +154,16 @@ createCookieHell({
 | --------------------- | ----------------------- |
 | **CookieHell**        | Nested consent banners  |
 | **PopupChaos**        | Ordered popup dismissal |
-| **FloatingBannerAds** | Moving banners          |
-| **RandomFakeErrors**  | Periodic error displays |
+| **FloatingBannerAds** | Moving banner ads       |
 
 ### Visual
 
-| Component                  | Description                     |
-| -------------------------- | ------------------------------- |
-| **FakeDownloadGrid**       | One real button among decoys    |
-| **GlitchText**             | Text cycling through variations |
-| **OpacityFlash**           | Flashing opacity                |
-| **MicroscopicCloseButton** | Precision close buttons         |
-| **FakeMarqueeFields**      | Scrolling field displays        |
+| Component                  | Description                        |
+| -------------------------- | ---------------------------------- |
+| **FakeDownloadGrid**       | One real button among decoys       |
+| **GlitchText**             | Characters shuffle positions       |
+| **MicroscopicCloseButton** | Tiny close buttons among decoys    |
+| **FakeMarqueeFields**      | Scrolling decoy fields             |
 
 ### Semantic
 

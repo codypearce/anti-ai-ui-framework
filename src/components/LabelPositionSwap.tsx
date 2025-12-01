@@ -1,48 +1,64 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { componentLoggers } from '../utils/logger';
+import React, { useState, useEffect, useCallback } from 'react';
 
 /**
- * Label position options
+ * Label position options (legacy, kept for backwards compatibility)
  */
 export type LabelPosition = 'top' | 'bottom' | 'left' | 'right';
+
+/**
+ * Field definition for label shuffle
+ */
+export interface LabelShuffleField {
+  label: string;
+  placeholder: string;
+  type?: string;
+}
+
+/**
+ * Props passed to the renderField function
+ */
+export interface RenderFieldProps {
+  /** The current label text (may not match the field due to shuffling) */
+  label: string;
+  /** The field's placeholder text */
+  placeholder: string;
+  /** The field's input type */
+  type: string;
+  /** The current value of the input */
+  value: string;
+  /** Handler to update the value */
+  onChange: (value: string) => void;
+  /** Whether labels are currently fading during shuffle */
+  isFading: boolean;
+  /** The field index */
+  index: number;
+}
 
 /**
  * Props for the LabelPositionSwap component
  */
 export interface LabelPositionSwapProps {
   /**
-   * Label text
-   * @default 'Email'
+   * Field definitions (label, placeholder, type)
    */
-  label?: string;
+  fields?: LabelShuffleField[];
 
   /**
-   * Input placeholder
-   * @default 'Enter text...'
+   * Interval in milliseconds between label shuffles
+   * @default 2500
    */
-  placeholder?: string;
+  shuffleInterval?: number;
 
   /**
-   * Interval in milliseconds between position changes
-   * @default 2200
+   * Callback when labels shuffle
    */
-  changeInterval?: number;
+  onShuffle?: (labelOrder: number[]) => void;
 
   /**
-   * Available positions to cycle through
-   * @default ['top', 'bottom', 'left', 'right']
+   * Custom render function for each field.
+   * Use this to render your own field component.
    */
-  positions?: LabelPosition[];
-
-  /**
-   * Callback when position changes
-   */
-  onPositionChange?: (position: LabelPosition) => void;
-
-  /**
-   * Custom render function
-   */
-  children?: (position: LabelPosition, label: string, placeholder: string) => React.ReactNode;
+  renderField?: (props: RenderFieldProps) => React.ReactNode;
 
   /**
    * Custom CSS class for the container
@@ -53,156 +69,130 @@ export interface LabelPositionSwapProps {
    * Custom inline styles for the container
    */
   style?: React.CSSProperties;
-
-  /**
-   * Custom CSS class for the label
-   */
-  labelClassName?: string;
-
-  /**
-   * Custom inline styles for the label
-   */
-  labelStyle?: React.CSSProperties;
-
-  /**
-   * Custom CSS class for the input
-   */
-  inputClassName?: string;
-
-  /**
-   * Custom inline styles for the input
-   */
-  inputStyle?: React.CSSProperties;
-
-  /**
-   * Show current position indicator
-   * @default true
-   */
-  showPositionIndicator?: boolean;
 }
 
-const DEFAULT_POSITIONS: LabelPosition[] = ['top', 'bottom', 'left', 'right'];
+const DEFAULT_FIELDS: LabelShuffleField[] = [
+  { label: 'Full Name', placeholder: 'John Doe', type: 'text' },
+  { label: 'Email', placeholder: 'you@example.com', type: 'email' },
+  { label: 'Password', placeholder: 'Enter password', type: 'password' },
+];
 
 /**
- * LabelPositionSwap component that moves labels between different positions.
+ * LabelPositionSwap component where labels randomly shuffle between different inputs.
  *
- * This component creates confusion by moving the label to different positions
- * (top, bottom, left, right) relative to the input field. AI systems expect
- * labels in consistent locations and use label proximity to identify fields.
- * Constantly changing positions breaks field identification.
+ * The "Email" label might appear above the password field, "Name" above email, etc.
+ * Users can't trust that labels match their inputs.
  *
  * @example
  * ```tsx
- * // Basic usage with defaults
- * <LabelPositionSwap />
- *
- * // Custom label and timing
  * <LabelPositionSwap
- *   label="Username"
- *   placeholder="Enter username..."
- *   changeInterval={1500}
+ *   fields={[
+ *     { label: 'Username', placeholder: 'Enter username' },
+ *     { label: 'Email', placeholder: 'Enter email', type: 'email' },
+ *     { label: 'Password', placeholder: 'Enter password', type: 'password' },
+ *   ]}
+ *   shuffleInterval={3000}
  * />
- *
- * // Custom render with full control
- * <LabelPositionSwap>
- *   {(position, label, placeholder) => (
- *     <div className={`custom-container position-${position}`}>
- *       <label>{label}</label>
- *       <input type="text" placeholder={placeholder} />
- *     </div>
- *   )}
- * </LabelPositionSwap>
  * ```
  */
 export function LabelPositionSwap({
-  label = 'Email',
-  placeholder = 'Enter text...',
-  changeInterval = 2200,
-  positions = DEFAULT_POSITIONS,
-  onPositionChange,
-  children,
+  fields = DEFAULT_FIELDS,
+  shuffleInterval = 2500,
+  onShuffle,
+  renderField,
   className,
   style,
-  labelClassName,
-  labelStyle,
-  inputClassName,
-  inputStyle,
-  showPositionIndicator = true,
 }: LabelPositionSwapProps) {
-  const logger = useMemo(() => componentLoggers.labelPositionSwap, []);
+  const [values, setValues] = useState<string[]>(() => fields.map(() => ''));
+  const [labelOrder, setLabelOrder] = useState<number[]>(() => fields.map((_, i) => i));
+  const [fading, setFading] = useState(false);
 
-  const [currentPosition, setCurrentPosition] = useState<LabelPosition>(positions[0]);
+  const shuffleLabels = useCallback(() => {
+    setFading(true);
+
+    setTimeout(() => {
+      setLabelOrder(prev => {
+        const newOrder = [...prev].sort(() => Math.random() - 0.5);
+
+        // Make sure at least one label moved
+        if (fields.length > 1 && newOrder.every((val, idx) => val === prev[idx])) {
+          [newOrder[0], newOrder[1]] = [newOrder[1], newOrder[0]];
+        }
+
+        onShuffle?.(newOrder);
+        return newOrder;
+      });
+
+      setFading(false);
+    }, 150);
+  }, [fields.length, onShuffle]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const randomPosition = positions[Math.floor(Math.random() * positions.length)];
-      logger.debug('Changing label position to:', randomPosition);
-      setCurrentPosition(randomPosition);
-      onPositionChange?.(randomPosition);
-    }, changeInterval);
+    const timeout = setTimeout(shuffleLabels, 500);
+    const interval = setInterval(shuffleLabels, shuffleInterval);
 
-    return () => clearInterval(interval);
-  }, [positions, changeInterval, onPositionChange, logger]);
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
+  }, [shuffleInterval, shuffleLabels]);
 
-  if (children) {
-    return <>{children(currentPosition, label, placeholder)}</>;
-  }
-
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: currentPosition === 'top' || currentPosition === 'bottom'
-      ? 'column'
-      : 'row',
-    alignItems: currentPosition === 'left' || currentPosition === 'right'
-      ? 'center'
-      : 'stretch',
-    gap: '8px',
-    ...style,
+  const handleChange = (index: number, value: string) => {
+    setValues(prev => {
+      const newValues = [...prev];
+      newValues[index] = value;
+      return newValues;
+    });
   };
 
-  const defaultLabelStyle: React.CSSProperties = {
-    fontWeight: '500',
-    fontSize: '14px',
-    color: '#374151',
-    order: currentPosition === 'bottom' || currentPosition === 'right' ? 1 : 0,
-    ...labelStyle,
-  };
+  const defaultRenderField = ({ label, placeholder, type, value, onChange, isFading }: RenderFieldProps) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <label
+        style={{
+          fontWeight: 500,
+          fontSize: '14px',
+          color: '#374151',
+          opacity: isFading ? 0 : 1,
+          transition: 'opacity 0.15s',
+        }}
+      >
+        {label}
+      </label>
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: '100%',
+          padding: '10px 12px',
+          border: '1px solid #d1d5db',
+          borderRadius: '6px',
+          fontSize: '14px',
+          outline: 'none',
+          boxSizing: 'border-box',
+        }}
+      />
+    </div>
+  );
 
-  const defaultInputStyle: React.CSSProperties = {
-    padding: '8px 12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '4px',
-    fontSize: '14px',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-    order: currentPosition === 'top' || currentPosition === 'left' ? 1 : 0,
-    ...inputStyle,
-  };
-
-  const indicatorStyle: React.CSSProperties = {
-    fontSize: '12px',
-    color: '#6b7280',
-    marginTop: '8px',
-  };
+  const renderFn = renderField ?? defaultRenderField;
 
   return (
-    <div className={className}>
-      <div style={containerStyle}>
-        <label className={labelClassName} style={defaultLabelStyle}>
-          {label}
-        </label>
-        <input
-          type="text"
-          placeholder={placeholder}
-          className={inputClassName}
-          style={defaultInputStyle}
-        />
-      </div>
-      {showPositionIndicator && (
-        <p style={indicatorStyle}>
-          Label position changes every {changeInterval}ms (current: {currentPosition})
-        </p>
-      )}
+    <div className={className} style={{ display: 'flex', flexDirection: 'column', gap: '16px', ...style }}>
+      {fields.map((field, index) => (
+        <React.Fragment key={index}>
+          {renderFn({
+            label: fields[labelOrder[index]].label,
+            placeholder: field.placeholder,
+            type: field.type || 'text',
+            value: values[index],
+            onChange: (value) => handleChange(index, value),
+            isFading: fading,
+            index,
+          })}
+        </React.Fragment>
+      ))}
     </div>
   );
 }

@@ -1,209 +1,189 @@
-import { componentLoggers } from '../utils/logger';
-
 /**
- * Label position options
+ * Label position options (legacy, kept for backwards compatibility)
  */
 export type LabelPosition = 'top' | 'bottom' | 'left' | 'right';
 
 /**
- * Options for creating label position swap
+ * Field definition for label shuffle
+ */
+export interface LabelShuffleField {
+  label: string;
+  placeholder: string;
+  type?: string;
+}
+
+/**
+ * Options for creating label shuffle
  */
 export interface LabelPositionSwapOptions {
   /**
-   * Container element to append the field to
+   * Container element to append the fields to
    */
   container: HTMLElement;
 
   /**
-   * Label text
-   * @default 'Email'
+   * Field definitions (label, placeholder, type)
    */
-  label?: string;
+  fields?: LabelShuffleField[];
 
   /**
-   * Input placeholder
-   * @default 'Enter text...'
+   * Interval in milliseconds between label shuffles
+   * @default 2500
    */
-  placeholder?: string;
+  shuffleInterval?: number;
 
   /**
-   * Interval in milliseconds between position changes
-   * @default 2200
+   * Callback when labels shuffle
    */
-  changeInterval?: number;
-
-  /**
-   * Available positions to cycle through
-   * @default ['top', 'bottom', 'left', 'right']
-   */
-  positions?: LabelPosition[];
-
-  /**
-   * Callback when position changes
-   */
-  onPositionChange?: (position: LabelPosition) => void;
-
-  /**
-   * Custom function to create field element
-   */
-  createFieldElement?: (position: LabelPosition, label: string, placeholder: string) => HTMLElement;
-
-  /**
-   * Show current position indicator
-   * @default true
-   */
-  showPositionIndicator?: boolean;
+  onShuffle?: (labelOrder: number[]) => void;
 }
 
-const DEFAULT_POSITIONS: LabelPosition[] = ['top', 'bottom', 'left', 'right'];
+const DEFAULT_FIELDS: LabelShuffleField[] = [
+  { label: 'Full Name', placeholder: 'John Doe', type: 'text' },
+  { label: 'Email', placeholder: 'you@example.com', type: 'email' },
+  { label: 'Password', placeholder: 'Enter password', type: 'password' },
+];
 
 /**
- * Creates a label and input field where the label moves between different positions with vanilla JavaScript.
+ * Creates a form where labels randomly shuffle between different inputs.
  *
- * This function creates confusion by moving the label to different positions
- * (top, bottom, left, right) relative to the input field. AI systems expect
- * labels in consistent locations and use label proximity to identify fields.
- * Constantly changing positions breaks field identification.
- *
- * @param options - Configuration options
- * @returns Cleanup function
+ * The "Email" label might appear above the password field, "Name" above email, etc.
+ * Users can't trust that labels match their inputs.
  *
  * @example
  * ```typescript
- * const container = document.getElementById('app');
- *
- * const cleanup = createLabelPositionSwap({
- *   container,
- *   label: 'Username',
- *   placeholder: 'Enter username...',
- *   changeInterval: 1500,
+ * createLabelPositionSwap({
+ *   container: document.getElementById('form'),
+ *   fields: [
+ *     { label: 'Username', placeholder: 'Enter username' },
+ *     { label: 'Email', placeholder: 'Enter email', type: 'email' },
+ *     { label: 'Password', placeholder: 'Enter password', type: 'password' },
+ *   ],
+ *   shuffleInterval: 3000,
  * });
- *
- * // Later, cleanup
- * cleanup();
  * ```
  */
-export function createLabelPositionSwap(
-  options: LabelPositionSwapOptions
-): () => void {
-  const logger = componentLoggers.labelPositionSwap;
-
+export function createLabelPositionSwap(options: LabelPositionSwapOptions) {
   const {
     container,
-    label = 'Email',
-    placeholder = 'Enter text...',
-    changeInterval = 2200,
-    positions = DEFAULT_POSITIONS,
-    onPositionChange,
-    createFieldElement,
-    showPositionIndicator = true,
+    fields = DEFAULT_FIELDS,
+    shuffleInterval = 2500,
+    onShuffle,
   } = options;
 
-  let currentPosition: LabelPosition = positions[0];
-
-  // Create wrapper
   const wrapper = document.createElement('div');
-
-  // Create field container
-  const fieldContainer = document.createElement('div');
-  fieldContainer.style.display = 'flex';
-  fieldContainer.style.gap = '8px';
-
-  // Create label
-  const labelElement = document.createElement('label');
-  labelElement.textContent = label;
-  Object.assign(labelElement.style, {
-    fontWeight: '500',
-    fontSize: '14px',
-    color: '#374151',
+  Object.assign(wrapper.style, {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
   });
 
-  // Create input
-  const inputElement = document.createElement('input');
-  inputElement.type = 'text';
-  inputElement.placeholder = placeholder;
-  Object.assign(inputElement.style, {
-    padding: '8px 12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '4px',
-    fontSize: '14px',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-  });
+  // Create label elements
+  const labelElements: HTMLLabelElement[] = [];
+  const fieldWrappers: HTMLDivElement[] = [];
+  const inputs: HTMLInputElement[] = [];
 
-  // Create indicator
-  let indicatorElement: HTMLElement | null = null;
-  if (showPositionIndicator) {
-    indicatorElement = document.createElement('p');
-    Object.assign(indicatorElement.style, {
-      fontSize: '12px',
-      color: '#6b7280',
-      marginTop: '8px',
+  // Track which label index is displayed above which field
+  let labelOrder = fields.map((_, i) => i);
+
+  fields.forEach((field) => {
+    const fieldWrapper = document.createElement('div');
+    Object.assign(fieldWrapper.style, {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '6px',
     });
-  }
 
-  const updatePosition = (position: LabelPosition) => {
-    if (createFieldElement) {
-      // Custom rendering
-      fieldContainer.innerHTML = '';
-      const customElement = createFieldElement(position, label, placeholder);
-      fieldContainer.appendChild(customElement);
-    } else {
-      // Default rendering
-      fieldContainer.innerHTML = '';
+    const label = document.createElement('label');
+    label.textContent = field.label;
+    Object.assign(label.style, {
+      fontWeight: '500',
+      fontSize: '14px',
+      color: '#374151',
+      transition: 'opacity 0.2s',
+    });
 
-      // Update layout based on position
-      if (position === 'top' || position === 'bottom') {
-        fieldContainer.style.flexDirection = 'column';
-        fieldContainer.style.alignItems = 'stretch';
+    const input = document.createElement('input');
+    input.type = field.type || 'text';
+    input.placeholder = field.placeholder;
+    Object.assign(input.style, {
+      width: '100%',
+      padding: '10px 12px',
+      border: '1px solid #d1d5db',
+      borderRadius: '6px',
+      fontSize: '14px',
+      outline: 'none',
+      boxSizing: 'border-box',
+      transition: 'border-color 0.2s, box-shadow 0.2s',
+    });
 
-        if (position === 'top') {
-          fieldContainer.appendChild(labelElement);
-          fieldContainer.appendChild(inputElement);
-        } else {
-          fieldContainer.appendChild(inputElement);
-          fieldContainer.appendChild(labelElement);
-        }
-      } else {
-        fieldContainer.style.flexDirection = 'row';
-        fieldContainer.style.alignItems = 'center';
+    input.addEventListener('focus', () => {
+      input.style.borderColor = '#3b82f6';
+      input.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+    });
 
-        if (position === 'left') {
-          fieldContainer.appendChild(labelElement);
-          fieldContainer.appendChild(inputElement);
-        } else {
-          fieldContainer.appendChild(inputElement);
-          fieldContainer.appendChild(labelElement);
-        }
-      }
+    input.addEventListener('blur', () => {
+      input.style.borderColor = '#d1d5db';
+      input.style.boxShadow = 'none';
+    });
+
+    fieldWrapper.appendChild(label);
+    fieldWrapper.appendChild(input);
+    wrapper.appendChild(fieldWrapper);
+
+    labelElements.push(label);
+    fieldWrappers.push(fieldWrapper);
+    inputs.push(input);
+  });
+
+  function shuffleLabels() {
+    // Create new random order
+    const newOrder = [...labelOrder].sort(() => Math.random() - 0.5);
+
+    // Make sure at least one label moved
+    if (fields.length > 1 && newOrder.every((val, idx) => val === labelOrder[idx])) {
+      // Swap first two if nothing changed
+      [newOrder[0], newOrder[1]] = [newOrder[1], newOrder[0]];
     }
 
-    // Update indicator
-    if (indicatorElement) {
-      indicatorElement.textContent = `Label position changes every ${changeInterval}ms (current: ${position})`;
-    }
-  };
+    labelOrder = newOrder;
 
-  // Initial render
-  wrapper.appendChild(fieldContainer);
-  if (indicatorElement) {
-    wrapper.appendChild(indicatorElement);
+    // Update label text in each position
+    labelElements.forEach((labelEl, fieldIndex) => {
+      const labelIndex = labelOrder[fieldIndex];
+      labelEl.style.opacity = '0';
+
+      setTimeout(() => {
+        labelEl.textContent = fields[labelIndex].label;
+        labelEl.style.opacity = '1';
+      }, 150);
+    });
+
+    onShuffle?.(labelOrder);
   }
+
   container.appendChild(wrapper);
-  updatePosition(currentPosition);
 
-  // Start position changing
-  const interval = setInterval(() => {
-    const randomPosition = positions[Math.floor(Math.random() * positions.length)];
-    logger.debug('Changing label position to:', randomPosition);
-    currentPosition = randomPosition;
-    updatePosition(currentPosition);
-    onPositionChange?.(randomPosition);
-  }, changeInterval);
+  // Initial shuffle after a short delay
+  const initialTimeout = setTimeout(shuffleLabels, 500);
 
-  // Return cleanup function
-  return () => {
-    clearInterval(interval);
-    wrapper.remove();
+  // Start shuffling
+  const interval = setInterval(shuffleLabels, shuffleInterval);
+
+  return {
+    destroy() {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+      wrapper.remove();
+    },
+    getValues() {
+      return inputs.map(input => input.value);
+    },
+    getLabelOrder() {
+      return [...labelOrder];
+    },
+    shuffleNow() {
+      shuffleLabels();
+    },
   };
 }

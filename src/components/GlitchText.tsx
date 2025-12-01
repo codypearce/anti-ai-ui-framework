@@ -1,32 +1,55 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { componentLoggers } from '../utils/logger';
+
+/**
+ * Props passed to the renderChar function
+ */
+export interface RenderCharProps {
+  /** The character to render */
+  char: string;
+  /** Original index in the source text */
+  originalIndex: number;
+  /** Current position index */
+  currentIndex: number;
+  /** Vertical offset in pixels */
+  offsetY: number;
+  /** Default styles for the character */
+  style: React.CSSProperties;
+}
 
 /**
  * Props for the GlitchText component
  */
 export interface GlitchTextProps {
   /**
-   * Base text to apply glitch variations to
+   * Text to display with shuffling characters
    * @default 'Text'
    */
   text?: string;
 
   /**
-   * Array of text variations to cycle through
-   * If not provided, default variations will be generated from the base text
+   * Milliseconds between character shuffles
+   * @default 120
    */
-  variations?: string[];
+  shuffleInterval?: number;
 
   /**
-   * Interval in milliseconds between text changes
-   * @default 800
+   * Probability (0-1) of swapping characters on each interval
+   * @default 0.4
    */
-  changeInterval?: number;
+  shuffleChance?: number;
 
   /**
-   * Custom render function for the text
+   * Max vertical offset in pixels for each character
+   * @default 8
    */
-  children?: (currentText: string) => React.ReactNode;
+  jitterY?: number;
+
+  /**
+   * Prefer swapping adjacent characters for better readability
+   * @default true
+   */
+  preferAdjacent?: boolean;
 
   /**
    * Additional CSS class for the container
@@ -39,97 +62,172 @@ export interface GlitchTextProps {
   style?: React.CSSProperties;
 
   /**
-   * HTML tag to use for the text element
-   * @default 'span'
+   * Inline styles for each character span
    */
-  as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div';
+  charStyle?: React.CSSProperties;
+
+  /**
+   * Custom render function for each character
+   */
+  renderChar?: (props: RenderCharProps) => React.ReactNode;
+}
+
+interface CharState {
+  char: string;
+  originalIndex: number;
+  offsetY: number;
 }
 
 /**
- * Generates default text variations from base text
- */
-function generateDefaultVariations(text: string): string[] {
-  return [
-    text, // Original
-    text.replace(/[aeiou]/gi, (m) => Math.random() > 0.5 ? m.toUpperCase() : m), // Random vowel case
-    text.split('').map(c => c + '\u0336').join(''), // Strikethrough combining character
-    text.toUpperCase(), // All caps
-    text.toLowerCase(), // All lowercase
-    text.split('').map((c, i) => i % 2 === 0 ? c.toUpperCase() : c.toLowerCase()).join(''), // Alternating case
-  ];
-}
-
-/**
- * Creates dynamic text that cycles through stylistic variations.
+ * Creates text with characters that constantly shuffle positions.
  *
- * This component displays text that randomly cycles through different variations
- * including leet speak, zalgo text, Unicode variations, and case changes.
- * The dynamic encoding provides visual interest while maintaining readability
- * for human users.
+ * Humans can still read word shapes, but OCR gets scrambled output
+ * on every frame. Characters swap positions rapidly with optional
+ * vertical jitter for additional visual disruption.
  *
  * @example
  * ```tsx
  * // Basic usage
- * <GlitchText text="Company Name" />
+ * <GlitchText text="Welcome" />
  *
- * // Custom variations
+ * // Custom settings
  * <GlitchText
- *   text="Codinhood"
- *   variations={[
- *     'Codinhood',
- *     'C0d1nh00d',
- *     'ℂ𝕠𝕕𝕚𝕟𝕙𝕠𝕠𝕕',
- *     'CODINHOOD',
- *   ]}
- *   changeInterval={1000}
+ *   text="Hello World"
+ *   shuffleInterval={100}
+ *   shuffleChance={0.5}
+ *   jitterY={10}
  * />
  *
- * // As header with custom render
- * <GlitchText text="Welcome" as="h1">
- *   {(currentText) => (
- *     <div>
- *       <span style={{ fontSize: '2rem' }}>{currentText}</span>
- *       <small>Changing text...</small>
- *     </div>
- *   )}
- * </GlitchText>
+ * // With custom styling
+ * <GlitchText
+ *   text="Styled"
+ *   style={{ fontSize: '3rem', color: 'white' }}
+ *   charStyle={{ textShadow: '0 0 10px blue' }}
+ * />
  * ```
  */
 export function GlitchText({
   text = 'Text',
-  variations,
-  changeInterval = 800,
-  children,
+  shuffleInterval = 120,
+  shuffleChance = 0.4,
+  jitterY = 8,
+  preferAdjacent = true,
   className,
   style,
-  as: Component = 'span',
+  charStyle,
+  renderChar,
 }: GlitchTextProps) {
   const logger = useMemo(() => componentLoggers.glitchText, []);
 
-  const textVariations = useMemo(
-    () => variations || generateDefaultVariations(text),
-    [variations, text]
+  const [chars, setChars] = useState<CharState[]>(() =>
+    text.split('').map((char, i) => ({
+      char,
+      originalIndex: i,
+      offsetY: 0,
+    }))
   );
-  const [currentText, setCurrentText] = useState(textVariations[0]);
+
+  const animationRef = useRef<number | null>(null);
+  const lastShuffleRef = useRef<number>(0);
+
+  const shufflePositions = useCallback(() => {
+    setChars((prevChars) => {
+      const newChars = [...prevChars];
+      const numSwaps = Math.floor(Math.random() * 3) + 1;
+
+      for (let s = 0; s < numSwaps; s++) {
+        if (Math.random() > shuffleChance) continue;
+
+        const i = Math.floor(Math.random() * newChars.length);
+        let j = Math.floor(Math.random() * newChars.length);
+
+        // Prefer adjacent swaps for readability
+        if (preferAdjacent && Math.random() < 0.7) {
+          j = Math.min(newChars.length - 1, Math.max(0, i + (Math.random() < 0.5 ? -1 : 1)));
+        }
+
+        if (i !== j) {
+          [newChars[i], newChars[j]] = [newChars[j], newChars[i]];
+          logger.debug('Swapped characters:', i, j);
+        }
+      }
+
+      // Add vertical jitter
+      return newChars.map((c) => ({
+        ...c,
+        offsetY: (Math.random() - 0.5) * jitterY,
+      }));
+    });
+  }, [shuffleChance, preferAdjacent, jitterY, logger]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const randomIndex = Math.floor(Math.random() * textVariations.length);
-      const newText = textVariations[randomIndex];
-      logger.debug('Switching to text variation:', newText);
-      setCurrentText(newText);
-    }, changeInterval);
+    // Reset chars when text changes
+    setChars(
+      text.split('').map((char, i) => ({
+        char,
+        originalIndex: i,
+        offsetY: 0,
+      }))
+    );
+  }, [text]);
 
-    return () => clearInterval(interval);
-  }, [textVariations, changeInterval, logger]);
+  useEffect(() => {
+    const animate = () => {
+      const now = performance.now();
 
-  if (children) {
-    return <>{children(currentText)}</>;
-  }
+      if (now - lastShuffleRef.current > shuffleInterval) {
+        shufflePositions();
+        lastShuffleRef.current = now;
+      }
 
-  return React.createElement(
-    Component,
-    { className, style },
-    currentText
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [shuffleInterval, shufflePositions]);
+
+  const defaultCharStyle: React.CSSProperties = {
+    display: 'inline-block',
+    willChange: 'transform',
+    transition: 'transform 0.15s ease-out',
+    ...charStyle,
+  };
+
+  const defaultRenderChar = ({ char, style: charStyles }: RenderCharProps) => (
+    <span style={charStyles}>{char}</span>
+  );
+
+  const charRenderer = renderChar ?? defaultRenderChar;
+
+  return (
+    <div
+      className={className}
+      style={{
+        display: 'flex',
+        userSelect: 'none',
+        ...style,
+      }}
+    >
+      {chars.map((c, idx) => (
+        <React.Fragment key={`${c.originalIndex}-${idx}`}>
+          {charRenderer({
+            char: c.char,
+            originalIndex: c.originalIndex,
+            currentIndex: idx,
+            offsetY: c.offsetY,
+            style: {
+              ...defaultCharStyle,
+              transform: `translateY(${c.offsetY}px)`,
+            },
+          })}
+        </React.Fragment>
+      ))}
+    </div>
   );
 }

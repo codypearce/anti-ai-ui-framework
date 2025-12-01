@@ -10,56 +10,60 @@ export interface GlitchTextOptions {
   container: HTMLElement;
 
   /**
-   * Base text to apply glitch variations to
+   * Text to display with shuffling characters
    * @default 'Text'
    */
   text?: string;
 
   /**
-   * Array of text variations to cycle through
-   * If not provided, default variations will be generated from the base text
+   * Milliseconds between character shuffles
+   * @default 120
    */
-  variations?: string[];
+  shuffleInterval?: number;
 
   /**
-   * Interval in milliseconds between text changes
-   * @default 800
+   * Probability (0-1) of swapping characters on each interval
+   * @default 0.4
    */
-  changeInterval?: number;
+  shuffleChance?: number;
 
   /**
-   * HTML tag to use for the text element
-   * @default 'span'
+   * Max vertical offset in pixels for each character
+   * @default 8
    */
-  tag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div';
+  jitterY?: number;
 
   /**
-   * Custom function to create text element
+   * Prefer swapping adjacent characters for better readability
+   * @default true
    */
-  createTextElement?: (currentText: string) => HTMLElement;
+  preferAdjacent?: boolean;
+
+  /**
+   * CSS styles to apply to the wrapper element
+   */
+  wrapperStyle?: string;
+
+  /**
+   * CSS styles to apply to each character span
+   */
+  charStyle?: string;
+}
+
+interface CharState {
+  char: string;
+  el: HTMLSpanElement;
+  originalIndex: number;
+  currentIndex: number;
+  offsetY: number;
 }
 
 /**
- * Generates default text variations from base text
- */
-function generateDefaultVariations(text: string): string[] {
-  return [
-    text, // Original
-    text.replace(/[aeiou]/gi, (m) => Math.random() > 0.5 ? m.toUpperCase() : m), // Random vowel case
-    text.split('').map(c => c + '\u0336').join(''), // Strikethrough combining character
-    text.toUpperCase(), // All caps
-    text.toLowerCase(), // All lowercase
-    text.split('').map((c, i) => i % 2 === 0 ? c.toUpperCase() : c.toLowerCase()).join(''), // Alternating case
-  ];
-}
-
-/**
- * Creates text that cycles through variations with vanilla JavaScript.
+ * Creates text with characters that constantly shuffle positions.
  *
- * This function displays text that randomly cycles through different variations
- * including leet speak, zalgo text, Unicode variations, and case changes.
- * AI text recognition expects consistent strings and struggles with constantly
- * changing text encodings.
+ * Humans can still read word shapes, but OCR gets scrambled output
+ * on every frame. Characters swap positions rapidly with optional
+ * vertical jitter for additional visual disruption.
  *
  * @param options - Configuration options
  * @returns Cleanup function
@@ -70,15 +74,10 @@ function generateDefaultVariations(text: string): string[] {
  *
  * const cleanup = createGlitchText({
  *   container,
- *   text: 'Codinhood',
- *   variations: [
- *     'Codinhood',
- *     'C0d1nh00d',
- *     'ℂ𝕠𝕕𝕚𝕟𝕙𝕠𝕠𝕕',
- *     'CODINHOOD',
- *   ],
- *   changeInterval: 1000,
- *   tag: 'h1',
+ *   text: 'Welcome',
+ *   shuffleInterval: 120,
+ *   shuffleChance: 0.4,
+ *   jitterY: 8
  * });
  *
  * // Later, cleanup
@@ -91,47 +90,91 @@ export function createGlitchText(options: GlitchTextOptions): () => void {
   const {
     container,
     text = 'Text',
-    variations,
-    changeInterval = 800,
-    tag = 'span',
-    createTextElement,
+    shuffleInterval = 120,
+    shuffleChance = 0.4,
+    jitterY = 8,
+    preferAdjacent = true,
+    wrapperStyle = 'display: flex; font-size: 2rem; font-weight: 800; user-select: none;',
+    charStyle = 'display: inline-block; will-change: transform; transition: transform 0.15s ease-out;',
   } = options;
 
-  const textVariations = variations || generateDefaultVariations(text);
+  // Create wrapper
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = wrapperStyle;
+  container.appendChild(wrapper);
 
-  // Create text element
-  let textElement: HTMLElement;
+  const chars: CharState[] = [];
 
-  if (createTextElement) {
-    textElement = createTextElement(textVariations[0]);
-  } else {
-    textElement = document.createElement(tag);
-    textElement.textContent = textVariations[0];
+  // Create character elements
+  for (let i = 0; i < text.length; i++) {
+    const span = document.createElement('span');
+    span.textContent = text[i];
+    span.style.cssText = charStyle;
+    wrapper.appendChild(span);
+
+    chars.push({
+      char: text[i],
+      el: span,
+      originalIndex: i,
+      currentIndex: i,
+      offsetY: 0
+    });
   }
 
-  container.appendChild(textElement);
+  let animationId: number | null = null;
+  let lastShuffle = 0;
 
-  // Update text function
-  const updateText = () => {
-    const randomIndex = Math.floor(Math.random() * textVariations.length);
-    const newText = textVariations[randomIndex];
-    logger.debug('Switching to text variation:', newText);
+  function shufflePositions() {
+    const numSwaps = Math.floor(Math.random() * 3) + 1;
 
-    if (createTextElement) {
-      const newElement = createTextElement(newText);
-      textElement.replaceWith(newElement);
-      textElement = newElement;
-    } else {
-      textElement.textContent = newText;
+    for (let s = 0; s < numSwaps; s++) {
+      if (Math.random() > shuffleChance) continue;
+
+      const i = Math.floor(Math.random() * chars.length);
+      let j = Math.floor(Math.random() * chars.length);
+
+      // Prefer adjacent swaps for readability
+      if (preferAdjacent && Math.random() < 0.7) {
+        j = Math.min(chars.length - 1, Math.max(0, i + (Math.random() < 0.5 ? -1 : 1)));
+      }
+
+      if (i !== j) {
+        // Swap in array
+        [chars[i], chars[j]] = [chars[j], chars[i]];
+        chars[i].currentIndex = i;
+        chars[j].currentIndex = j;
+
+        logger.debug('Swapped characters:', i, j);
+      }
     }
-  };
 
-  // Start interval
-  const interval = setInterval(updateText, changeInterval);
+    // Reorder DOM and add vertical jitter
+    chars.forEach((c) => {
+      wrapper.appendChild(c.el);
+      c.offsetY = (Math.random() - 0.5) * jitterY;
+      c.el.style.transform = `translateY(${c.offsetY}px)`;
+    });
+  }
+
+  function animate() {
+    const now = performance.now();
+
+    if (now - lastShuffle > shuffleInterval) {
+      shufflePositions();
+      lastShuffle = now;
+    }
+
+    animationId = requestAnimationFrame(animate);
+  }
+
+  // Start animation
+  animationId = requestAnimationFrame(animate);
 
   // Return cleanup function
   return () => {
-    clearInterval(interval);
-    textElement.remove();
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+    }
+    wrapper.remove();
   };
 }

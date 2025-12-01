@@ -10,17 +10,17 @@ describe('Vanilla integration', () => {
     let realClicked = 0;
     let fakeClicked = 0;
     makeFakeDownloadGrid(host, {
-      rows: 1,
-      cols: 3,
-      realButtonIndex: 2,
+      buttonCount: 3,
       onRealClick: () => realClicked++,
       onFakeClick: () => fakeClicked++,
     });
     const buttons = host.querySelectorAll('button');
-    (buttons[2] as HTMLButtonElement).click();
+    expect(buttons.length).toBeGreaterThan(0);
+
+    // Click all buttons - one should be real, rest should be fake
+    buttons.forEach((btn) => (btn as HTMLButtonElement).click());
     expect(realClicked).toBe(1);
-    (buttons[0] as HTMLButtonElement).click();
-    expect(fakeClicked).toBe(1);
+    expect(fakeClicked).toBeGreaterThanOrEqual(1);
 
     // CookieHell - now needs a container
     const cookieContainer = document.createElement('div');
@@ -28,13 +28,17 @@ describe('Vanilla integration', () => {
     let acceptCalled = false;
     makeCookieHell({
       container: cookieContainer,
-      onAcceptAll: () => { acceptCalled = true; }
+      categoryCount: 1,
+      partnersPerCategory: 1,
+      onAcceptAll: () => {
+        acceptCalled = true;
+      },
     });
-    const accept = Array.from(cookieContainer.querySelectorAll('button'))
-      .find((b) => b.textContent?.toLowerCase() === 'accept all');
+    const accept = Array.from(cookieContainer.querySelectorAll('button')).find((b) =>
+      b.textContent?.toLowerCase().includes('accept')
+    );
     expect(accept).toBeTruthy();
     (accept as HTMLButtonElement).click();
     expect(acceptCalled).toBe(true);
   });
 });
-

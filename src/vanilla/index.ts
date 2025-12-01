@@ -7,18 +7,18 @@ export { makePasswordHell } from './passwordHell';
 export { makeShiftingInterface } from './shiftingInterface';
 export { makeSemanticGaslighting } from './semanticGaslighting';
 export { makeMitosisButton } from './mitosisButton';
-export { makeMarqueeInputs } from './marqueeInputs';
 export { createMicroscopicCloseButton } from './microscopicCloseButton';
 export { createThreeFormCarousel } from './threeFormCarousel';
 export { createTabIndexRandomization } from './tabIndexRandomization';
-export { createRandomFakeErrors } from './randomFakeErrors';
+export { createTrafficLightForm } from './trafficLightForm';
 export { createFakeMarqueeFields } from './fakeMarqueeFields';
 export { createFormChaos } from './formChaos';
 export { createGlitchText } from './glitchText';
 export { createFloatingBannerAds } from './floatingBannerAds';
 export { createLabelPositionSwap } from './labelPositionSwap';
-export { createOpacityFlash } from './opacityFlash';
+export { createInputMisdirection } from './inputMisdirection';
 export { makeGravityField } from './gravityField';
+export { createPendulumFields } from './pendulumFields';
 
 // Public types
 export type { RunawayOptions } from './runawayButton';
@@ -33,15 +33,15 @@ export type {
   SemanticGaslightingOptions,
 } from './semanticGaslighting';
 export type { MitosisOptions as MitosisButtonOptions, RealIndexStrategy as MitosisRealIndexStrategy } from './mitosisButton';
-export type { MarqueeInputsOptions as MarqueeInputsOptions, MarqueeDirection as MarqueeInputsDirection } from './marqueeInputs';
 export type { MicroscopicCloseButtonOptions } from './microscopicCloseButton';
 export type { ThreeFormCarouselOptions } from './threeFormCarousel';
 export type { TabIndexRandomizationOptions } from './tabIndexRandomization';
-export type { RandomFakeErrorsOptions } from './randomFakeErrors';
+export type { TrafficLightFormOptions, TrafficLightField as VanillaTrafficLightField, DurationRange as VanillaDurationRange } from './trafficLightForm';
 export type { FakeMarqueeFieldsOptions, FakeField as VanillaFakeField } from './fakeMarqueeFields';
 export type { FormChaosOptions } from './formChaos';
 export type { GlitchTextOptions } from './glitchText';
 export type { FloatingBannerAdsOptions, FloatingAd as VanillaFloatingAd } from './floatingBannerAds';
 export type { LabelPositionSwapOptions, LabelPosition as VanillaLabelPosition } from './labelPositionSwap';
-export type { OpacityFlashOptions } from './opacityFlash';
+export type { InputMisdirectionOptions } from './inputMisdirection';
 export type { GravityFieldOptions, GravityWell as VanillaGravityWell, WellFollowMode as VanillaWellFollowMode } from './gravityField';
+export type { PendulumFieldsOptions, PendulumField as VanillaPendulumField, RenderFieldContext, EnergyState as VanillaEnergyState } from './pendulumFields';

@@ -18,6 +18,13 @@ export interface GravityFieldOptions {
   followSpeed?: number;
   showWells?: boolean;
   wellColor?: string;
+  /**
+   * Initial positions for gravity wells as array of {x, y} coordinates (0-1 normalized).
+   * If provided, wellCount is ignored and wells are placed at these positions.
+   * x: 0 = left edge, 1 = right edge
+   * y: 0 = top edge, 1 = bottom edge
+   */
+  initialWellPositions?: Array<{ x: number; y: number }>;
 }
 
 interface DriftingElement {
@@ -51,18 +58,45 @@ function calculateGravityForce(
   for (const well of wells) {
     const dx = well.x - itemX;
     const dy = well.y - itemY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    const dist = Math.sqrt(dx * dx + dy * dy);
 
-    const effectiveDistance = Math.max(distance, 20);
-    const force = (well.strength * 1000) / (effectiveDistance * effectiveDistance);
+    if (dist > 0) {
+      // Normalize direction
+      const nx = dx / dist;
+      const ny = dy / dist;
 
-    if (distance > 0) {
-      fx += (dx / distance) * force;
-      fy += (dy / distance) * force;
+      // Perpendicular direction (for orbit)
+      const px = -ny;
+      const py = nx;
+
+      // Ideal orbit radius
+      const orbitRadius = 80 + well.strength * 40;
+
+      if (dist < orbitRadius * 0.5) {
+        // Too close - push out
+        const repulse = (orbitRadius * 0.5 - dist) * 0.05;
+        fx -= nx * repulse;
+        fy -= ny * repulse;
+      } else if (dist < orbitRadius * 1.5) {
+        // In orbital zone - add tangential force for orbit + gentle centering
+        const orbitForce = well.strength * 0.4;
+        fx += px * orbitForce;
+        fy += py * orbitForce;
+
+        // Gentle pull/push toward ideal radius
+        const radiusDiff = (dist - orbitRadius) * 0.005;
+        fx += nx * radiusDiff;
+        fy += ny * radiusDiff;
+      } else {
+        // Far away - attract toward well
+        const attractForce = well.strength * 0.2;
+        fx += nx * attractForce;
+        fy += ny * attractForce;
+      }
     }
   }
 
-  const maxForce = 5;
+  const maxForce = 1.5;
   const totalForce = Math.sqrt(fx * fx + fy * fy);
   if (totalForce > maxForce) {
     fx = (fx / totalForce) * maxForce;
@@ -79,10 +113,11 @@ export function makeGravityField(container: HTMLElement, options: GravityFieldOp
     noise = 2,
     reseedOnHover = true,
     updateInterval = 50,
-    followMode = 'follow',
+    followMode = 'fixed',
     followSpeed = 0.005,
     showWells = true,
     wellColor = '#e94560',
+    initialWellPositions,
   } = options;
 
   const logger = componentLoggers.gravityField;
@@ -98,7 +133,17 @@ export function makeGravityField(container: HTMLElement, options: GravityFieldOp
   const height = containerRect.height || 300;
 
   // Initialize gravity wells
-  let wells = generateWells(wellCount, width, height, wellStrength);
+  let wells: GravityWell[];
+  if (initialWellPositions && initialWellPositions.length > 0) {
+    // Use provided initial positions (normalized 0-1 coordinates)
+    wells = initialWellPositions.map(pos => ({
+      x: pos.x * width,
+      y: pos.y * height,
+      strength: wellStrength * (0.7 + Math.random() * 0.3),
+    }));
+  } else {
+    wells = generateWells(wellCount, width, height, wellStrength);
+  }
   logger.debug('Initialized gravity wells', wells);
 
   // Create well visualization elements
@@ -197,6 +242,7 @@ export function makeGravityField(container: HTMLElement, options: GravityFieldOp
   // Get all direct children BEFORE adding wells
   const children = Array.from(container.children) as HTMLElement[];
 
+  // Now create wells (after capturing children)
   createWellElements();
   const driftingElements: DriftingElement[] = children.map((element, index) => {
     element.style.position = 'absolute';
@@ -233,8 +279,8 @@ export function makeGravityField(container: HTMLElement, options: GravityFieldOp
     for (const item of driftingElements) {
       const { fx, fy } = calculateGravityForce(item.x, item.y, wells);
 
-      const noiseX = (Math.random() - 0.5) * noise * 2;
-      const noiseY = (Math.random() - 0.5) * noise * 2;
+      const noiseX = (Math.random() - 0.5) * noise * 0.5;
+      const noiseY = (Math.random() - 0.5) * noise * 0.5;
 
       const damping = 0.92;
       item.velocityX = (item.velocityX + fx) * damping + noiseX;
@@ -274,7 +320,17 @@ export function makeGravityField(container: HTMLElement, options: GravityFieldOp
   // Event handlers
   function handleMouseEnter() {
     if (!reseedOnHover) return;
-    wells = generateWells(wellCount, width, height, wellStrength);
+    // If initial positions were provided, reseed to those positions (with slight variation)
+    // Otherwise generate random wells
+    if (initialWellPositions && initialWellPositions.length > 0) {
+      wells = initialWellPositions.map(pos => ({
+        x: pos.x * width,
+        y: pos.y * height,
+        strength: wellStrength * (0.7 + Math.random() * 0.3),
+      }));
+    } else {
+      wells = generateWells(wellCount, width, height, wellStrength);
+    }
     createWellElements();
     logger.debug('Reseeded gravity wells on hover', wells);
   }

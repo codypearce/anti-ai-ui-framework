@@ -15,166 +15,125 @@ describe('createLabelPositionSwap (vanilla)', () => {
     document.body.innerHTML = '';
   });
 
-  it('returns cleanup function', () => {
-    const cleanup = createLabelPositionSwap({ container });
-    expect(cleanup).toBeInstanceOf(Function);
+  it('returns object with destroy method', () => {
+    const result = createLabelPositionSwap({ container });
+    expect(result).toHaveProperty('destroy');
+    expect(typeof result.destroy).toBe('function');
+    result.destroy();
   });
 
-  it('creates label and input', () => {
-    createLabelPositionSwap({ container });
-    expect(container.querySelector('label')).toBeInTheDocument();
-    expect(container.querySelector('input')).toBeInTheDocument();
+  it('creates labels and inputs for default fields', () => {
+    const result = createLabelPositionSwap({ container });
+    const labels = container.querySelectorAll('label');
+    const inputs = container.querySelectorAll('input');
+
+    // Default has 3 fields: Full Name, Email, Password
+    expect(labels.length).toBe(3);
+    expect(inputs.length).toBe(3);
+
+    result.destroy();
   });
 
-  it('uses custom label and placeholder', () => {
-    createLabelPositionSwap({
+  it('uses custom fields', () => {
+    const result = createLabelPositionSwap({
       container,
-      label: 'Username',
-      placeholder: 'Enter username...',
+      fields: [
+        { label: 'Username', placeholder: 'Enter username' },
+        { label: 'Email', placeholder: 'Enter email', type: 'email' },
+      ],
     });
 
-    expect(container.querySelector('label')).toHaveTextContent('Username');
-    expect(container.querySelector('input')).toHaveAttribute('placeholder', 'Enter username...');
+    const labels = container.querySelectorAll('label');
+    const inputs = container.querySelectorAll('input');
+
+    expect(labels.length).toBe(2);
+    expect(inputs.length).toBe(2);
+    expect(labels[0].textContent).toBe('Username');
+    expect(inputs[0].getAttribute('placeholder')).toBe('Enter username');
+
+    result.destroy();
   });
 
-  it('changes position at intervals', async () => {
-    const onPositionChange = vi.fn();
-    createLabelPositionSwap({
+  it('calls onShuffle after interval', async () => {
+    const onShuffle = vi.fn();
+    const result = createLabelPositionSwap({
       container,
-      changeInterval: 1000,
-      onPositionChange,
+      shuffleInterval: 1000,
+      onShuffle,
     });
 
+    // Initial shuffle happens at 500ms
+    await vi.advanceTimersByTimeAsync(500);
+    expect(onShuffle).toHaveBeenCalled();
+
+    result.destroy();
+  });
+
+  it('shuffles labels at specified interval', async () => {
+    const onShuffle = vi.fn();
+    const result = createLabelPositionSwap({
+      container,
+      shuffleInterval: 1000,
+      onShuffle,
+    });
+
+    // Initial shuffle at 500ms
+    await vi.advanceTimersByTimeAsync(500);
+    expect(onShuffle).toHaveBeenCalledTimes(1);
+
+    // Next shuffle at 1500ms (500 + 1000)
     await vi.advanceTimersByTimeAsync(1000);
+    expect(onShuffle).toHaveBeenCalledTimes(2);
 
-    expect(onPositionChange).toHaveBeenCalled();
+    result.destroy();
   });
 
-  it('calls onPositionChange callback', async () => {
-    const onPositionChange = vi.fn();
-    createLabelPositionSwap({
+  it('returns label order in onShuffle callback', async () => {
+    const onShuffle = vi.fn();
+    const result = createLabelPositionSwap({
       container,
-      changeInterval: 1000,
-      onPositionChange,
+      fields: [
+        { label: 'A', placeholder: 'a' },
+        { label: 'B', placeholder: 'b' },
+        { label: 'C', placeholder: 'c' },
+      ],
+      shuffleInterval: 1000,
+      onShuffle,
     });
 
-    await vi.advanceTimersByTimeAsync(1000);
-    expect(onPositionChange).toHaveBeenCalled();
-    expect(['top', 'bottom', 'left', 'right']).toContain(onPositionChange.mock.calls[0][0]);
+    await vi.advanceTimersByTimeAsync(500);
+
+    // Should be called with an array of indices
+    expect(onShuffle).toHaveBeenCalled();
+    const order = onShuffle.mock.calls[0][0];
+    expect(Array.isArray(order)).toBe(true);
+    expect(order.length).toBe(3);
+    expect(order.sort()).toEqual([0, 1, 2]);
+
+    result.destroy();
   });
 
-  it('uses custom positions array', async () => {
-    const onPositionChange = vi.fn();
-    createLabelPositionSwap({
-      container,
-      positions: ['top', 'bottom'],
-      changeInterval: 1000,
-      onPositionChange,
-    });
-
-    await vi.advanceTimersByTimeAsync(1000);
-    expect(['top', 'bottom']).toContain(onPositionChange.mock.calls[0][0]);
-  });
-
-  it('uses custom createFieldElement function', async () => {
-    const createFieldElement = vi.fn((position, label, placeholder) => {
-      const el = document.createElement('div');
-      el.className = 'custom-field';
-      el.setAttribute('data-position', position);
-      el.textContent = `${label} - ${placeholder}`;
-      return el;
-    });
-
-    createLabelPositionSwap({
-      container,
-      changeInterval: 1000,
-      createFieldElement,
-    });
-
-    expect(createFieldElement).toHaveBeenCalledWith('top', 'Email', 'Enter text...');
-    expect(container.querySelector('.custom-field')).toBeInTheDocument();
-
-    await vi.advanceTimersByTimeAsync(1000);
-    expect(createFieldElement).toHaveBeenCalledTimes(2);
-  });
-
-  it('shows position indicator by default', () => {
-    createLabelPositionSwap({ container });
-    expect(container.textContent).toContain('current:');
-  });
-
-  it('hides position indicator when showPositionIndicator is false', () => {
-    createLabelPositionSwap({ container, showPositionIndicator: false });
-    expect(container.textContent).not.toContain('current:');
-  });
-
-  it('updates flex direction based on position', async () => {
-    createLabelPositionSwap({
-      container,
-      positions: ['top', 'bottom', 'left', 'right'],
-      changeInterval: 1000,
-    });
-
-    const wrapper = container.firstElementChild as HTMLElement;
-    const fieldContainer = wrapper.firstElementChild as HTMLElement;
-
-    await vi.advanceTimersByTimeAsync(1000);
-    expect(['column', 'row']).toContain(fieldContainer.style.flexDirection);
-  });
-
-  it('reorders elements based on position', async () => {
-    createLabelPositionSwap({
-      container,
-      positions: ['top', 'bottom'],
-      changeInterval: 1000,
-    });
-
-    const wrapper = container.firstElementChild as HTMLElement;
-    const fieldContainer = wrapper.firstElementChild as HTMLElement;
-
-    // Check initial order (top)
-    let firstChild = fieldContainer.firstElementChild;
-    expect(firstChild?.tagName).toBe('LABEL');
-
-    // Wait for position change
-    await vi.advanceTimersByTimeAsync(1000);
-
-    // Check if order might have changed
-    firstChild = fieldContainer.firstElementChild;
-    expect(['LABEL', 'INPUT']).toContain(firstChild?.tagName);
-  });
-
-  it('cycles through multiple positions', async () => {
-    const positions: string[] = [];
-    createLabelPositionSwap({
-      container,
-      changeInterval: 500,
-      onPositionChange: (pos) => positions.push(pos),
-    });
-
-    await vi.advanceTimersByTimeAsync(2000);
-    expect(positions.length).toBeGreaterThanOrEqual(3);
-  });
-
-  it('cleans up on cleanup', () => {
-    const cleanup = createLabelPositionSwap({ container });
+  it('cleans up on destroy', () => {
+    const result = createLabelPositionSwap({ container });
 
     expect(container.children.length).toBeGreaterThan(0);
-    cleanup();
+    result.destroy();
     expect(container.children.length).toBe(0);
   });
 
-  it('stops changing position after cleanup', async () => {
-    const onPositionChange = vi.fn();
-    const cleanup = createLabelPositionSwap({
+  it('stops shuffling after destroy', async () => {
+    const onShuffle = vi.fn();
+    const result = createLabelPositionSwap({
       container,
-      changeInterval: 1000,
-      onPositionChange,
+      shuffleInterval: 1000,
+      onShuffle,
     });
 
-    cleanup();
-    await vi.advanceTimersByTimeAsync(1000);
-    expect(onPositionChange).not.toHaveBeenCalled();
+    result.destroy();
+    onShuffle.mockClear();
+
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(onShuffle).not.toHaveBeenCalled();
   });
 
   it('applies default styles to label', () => {
@@ -189,18 +148,70 @@ describe('createLabelPositionSwap (vanilla)', () => {
     createLabelPositionSwap({ container });
     const input = container.querySelector('input') as HTMLElement;
 
-    expect(input.style.padding).toBe('8px 12px');
+    expect(input.style.padding).toBe('10px 12px');
     expect(input.style.border).toContain('1px');
   });
 
-  it('handles rapid position changes', async () => {
-    createLabelPositionSwap({
+  it('getValues returns input values', () => {
+    const result = createLabelPositionSwap({
       container,
-      changeInterval: 100,
+      fields: [
+        { label: 'A', placeholder: 'a' },
+        { label: 'B', placeholder: 'b' },
+      ],
+    });
+
+    const inputs = container.querySelectorAll('input');
+    (inputs[0] as HTMLInputElement).value = 'first';
+    (inputs[1] as HTMLInputElement).value = 'second';
+
+    const values = result.getValues();
+    expect(values).toEqual(['first', 'second']);
+
+    result.destroy();
+  });
+
+  it('getLabelOrder returns current label order', async () => {
+    const result = createLabelPositionSwap({
+      container,
+      fields: [
+        { label: 'A', placeholder: 'a' },
+        { label: 'B', placeholder: 'b' },
+      ],
+    });
+
+    const order = result.getLabelOrder();
+    expect(Array.isArray(order)).toBe(true);
+    expect(order.length).toBe(2);
+
+    result.destroy();
+  });
+
+  it('shuffleNow triggers immediate shuffle', () => {
+    const onShuffle = vi.fn();
+    const result = createLabelPositionSwap({
+      container,
+      onShuffle,
+    });
+
+    onShuffle.mockClear();
+    result.shuffleNow();
+    expect(onShuffle).toHaveBeenCalled();
+
+    result.destroy();
+  });
+
+  it('handles rapid shuffles', async () => {
+    const result = createLabelPositionSwap({
+      container,
+      shuffleInterval: 100,
     });
 
     await vi.advanceTimersByTimeAsync(500);
+    // Should still have valid structure
     expect(container.querySelector('label')).toBeInTheDocument();
     expect(container.querySelector('input')).toBeInTheDocument();
+
+    result.destroy();
   });
 });

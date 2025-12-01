@@ -1,12 +1,65 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { componentLoggers } from '../utils/logger';
 
+/**
+ * Props passed to the renderInput function
+ */
+export interface RenderInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  type: string;
+}
+
+/**
+ * Rule status for rendering
+ */
+export interface RuleStatus {
+  id: string;
+  description: string;
+  isValid: boolean;
+}
+
+/**
+ * Props passed to the renderRules function
+ */
+export interface RenderRulesProps {
+  rules: RuleStatus[];
+}
+
+/**
+ * Props passed to the renderSubmit function
+ */
+export interface RenderSubmitProps {
+  onSubmit: () => void;
+  disabled?: boolean;
+}
+
 export interface PasswordHellProps {
   requirementChangeInterval?: number; // ms
   onSubmit?: (password: string) => void;
   // For testing: provide a fixed rule set and freeze rotation
   rules?: Array<{ id: string; description: string | (() => string); validate: (pw: string) => boolean }>;
   freezeRules?: boolean;
+  /**
+   * Custom render function for the password input
+   */
+  renderInput?: (props: RenderInputProps) => React.ReactNode;
+  /**
+   * Custom render function for the requirements list
+   */
+  renderRules?: (props: RenderRulesProps) => React.ReactNode;
+  /**
+   * Custom render function for the submit button
+   */
+  renderSubmit?: (props: RenderSubmitProps) => React.ReactNode;
+  /**
+   * CSS class for the form container
+   */
+  className?: string;
+  /**
+   * Inline styles for the form container
+   */
+  style?: React.CSSProperties;
 }
 
 type Rule = {
@@ -63,6 +116,11 @@ export const PasswordHell: React.FC<PasswordHellProps> = ({
   onSubmit,
   rules: rulesProp,
   freezeRules = false,
+  renderInput,
+  renderRules,
+  renderSubmit,
+  className,
+  style,
 }) => {
   const logger = useMemo(() => componentLoggers.passwordHell, []);
   const [password, setPassword] = useState('');
@@ -116,31 +174,61 @@ export const PasswordHell: React.FC<PasswordHellProps> = ({
     onSubmit?.(password);
   };
 
+  // Prepare rule statuses for rendering
+  const ruleStatuses: RuleStatus[] = rules.map((r) => ({
+    id: r.id,
+    description: r.description(),
+    isValid: r.validate(password),
+  }));
+
+  // Default renderers
+  const defaultRenderInput = ({ value, onChange, type }: RenderInputProps) => (
+    <label>
+      Password
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ display: 'block', marginTop: 4, width: 320, padding: '8px' }}
+      />
+    </label>
+  );
+
+  const defaultRenderRules = ({ rules: ruleList }: RenderRulesProps) => (
+    <div style={{ fontSize: 13, color: '#334155' }}>
+      <strong>Requirements (subject to change):</strong>
+      <ul style={{ marginTop: 6 }}>
+        {ruleList.map((r) => (
+          <li key={r.id} style={{ color: r.isValid ? '#16a34a' : '#ef4444' }}>
+            {r.description}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  const defaultRenderSubmit = ({ onSubmit: handleClick }: RenderSubmitProps) => (
+    <div>
+      <button type="button" onClick={handleClick}>Create Account</button>
+    </div>
+  );
+
+  const inputRenderer = renderInput ?? defaultRenderInput;
+  const rulesRenderer = renderRules ?? defaultRenderRules;
+  const submitRenderer = renderSubmit ?? defaultRenderSubmit;
+
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 10 }}>
-      <label>
-        Password
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ display: 'block', marginTop: 4, width: 320, padding: '8px' }}
-        />
-      </label>
-      <div style={{ fontSize: 13, color: '#334155' }}>
-        <strong>Requirements (subject to change):</strong>
-        <ul style={{ marginTop: 6 }}>
-          {rules.map((r) => (
-            <li key={r.id} style={{ color: r.validate(password) ? '#16a34a' : '#ef4444' }}>
-              {r.description()}
-            </li>
-          ))}
-        </ul>
-      </div>
+    <form onSubmit={handleSubmit} className={className} style={{ display: 'grid', gap: 10, ...style }}>
+      {inputRenderer({
+        value: password,
+        onChange: setPassword,
+        type: 'password',
+      })}
+      {rulesRenderer({ rules: ruleStatuses })}
       {error && <div style={{ color: '#ef4444' }}>{error}</div>}
-      <div>
-        <button type="submit">Create Account</button>
-      </div>
+      {submitRenderer({
+        onSubmit: () => handleSubmit({ preventDefault: () => {} } as React.FormEvent),
+      })}
     </form>
   );
 };

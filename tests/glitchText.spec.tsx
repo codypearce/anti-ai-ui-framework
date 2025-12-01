@@ -1,11 +1,18 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { GlitchText } from '../src/components/GlitchText';
 
 describe('GlitchText', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    // Mock requestAnimationFrame
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+      return setTimeout(() => cb(performance.now()), 16) as unknown as number;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
+      clearTimeout(id);
+    });
   });
 
   afterEach(() => {
@@ -14,39 +21,44 @@ describe('GlitchText', () => {
   });
 
   it('renders with default text', () => {
-    render(<GlitchText />);
-    expect(screen.getByText(/Text/i)).toBeInTheDocument();
+    const { container } = render(<GlitchText />);
+    // The text is split into individual span elements
+    expect(container.textContent).toBe('Text');
   });
 
   it('renders with custom text', () => {
-    render(<GlitchText text="Hello" />);
-    expect(screen.getByText(/Hello/i)).toBeInTheDocument();
+    const { container } = render(<GlitchText text="Hello" />);
+    expect(container.textContent).toBe('Hello');
   });
 
-  it('cycles through variations', async () => {
-    const { container } = render(
-      <GlitchText text="Test" variations={['Test', 'T3st', 'TEST']} changeInterval={500} />
-    );
+  it('shuffles character positions over time', async () => {
+    const { container } = render(<GlitchText text="ABCD" shuffleInterval={100} shuffleChance={1} />);
 
-    const initialText = container.textContent;
-    await vi.advanceTimersByTimeAsync(500);
-    const newText = container.textContent;
+    // Get initial character order
+    const getCharacters = () => {
+      const spans = container.querySelectorAll('span');
+      return Array.from(spans).map((s) => s.textContent).join('');
+    };
 
-    expect(['Test', 'T3st', 'TEST']).toContain(initialText);
-    expect(['Test', 'T3st', 'TEST']).toContain(newText);
+    const initial = getCharacters();
+    expect(initial).toBe('ABCD');
+
+    // Advance time to trigger shuffles
+    await vi.advanceTimersByTimeAsync(200);
+
+    // Characters should still be there (just possibly reordered)
+    const shuffled = getCharacters();
+    expect(shuffled.split('').sort().join('')).toBe('ABCD');
   });
 
-  it('renders as different HTML tags', () => {
-    const { container } = render(<GlitchText text="Title" as="h1" />);
-    expect(container.querySelector('h1')).not.toBeNull();
+  it('applies custom className', () => {
+    const { container } = render(<GlitchText className="custom-class" />);
+    expect(container.querySelector('.custom-class')).toBeInTheDocument();
   });
 
-  it('uses children render prop', () => {
-    render(
-      <GlitchText text="Custom">
-        {(text) => <div data-testid="custom">{text}</div>}
-      </GlitchText>
-    );
-    expect(screen.getByTestId('custom')).toBeInTheDocument();
+  it('applies custom style', () => {
+    const { container } = render(<GlitchText style={{ fontSize: '24px' }} />);
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.style.fontSize).toBe('24px');
   });
 });

@@ -42,23 +42,24 @@ describe('RunawayButton (React)', () => {
 });
 
 describe('FakeDownloadGrid (React)', () => {
-  it('calls onRealClick for the real button', async () => {
+  it('calls onRealClick for the real button and onFakeClick for fake buttons', async () => {
     const onReal = vi.fn();
     const onFake = vi.fn();
     const { container } = render(
-      <FakeDownloadGrid rows={1} cols={3} realButtonIndex={1} onRealClick={onReal} onFakeClick={onFake} />
+      <FakeDownloadGrid buttonCount={4} onRealClick={onReal} onFakeClick={onFake} />
     );
-    // Query all buttons with text DOWNLOAD
     const buttons = container.querySelectorAll('button');
-    expect(buttons.length).toBe(3); // 1x3 grid
+    // Should have multiple buttons
+    expect(buttons.length).toBeGreaterThanOrEqual(2);
 
-    // index 1 should be real
-    fireEvent.click(buttons[1]);
-    expect(onReal).toHaveBeenCalled();
+    // Click all buttons to trigger callbacks
+    buttons.forEach((btn) => {
+      fireEvent.click(btn);
+    });
 
-    // index 0 should be fake
-    fireEvent.click(buttons[0]);
-    expect(onFake).toHaveBeenCalled();
+    // Should have exactly one real click and multiple fake clicks
+    expect(onReal).toHaveBeenCalledTimes(1);
+    expect(onFake.mock.calls.length).toBeGreaterThanOrEqual(1);
   });
 });
 

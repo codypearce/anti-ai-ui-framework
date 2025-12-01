@@ -68,14 +68,19 @@ export function makeMitosisButton(element: HTMLButtonElement, opts: MitosisOptio
     return Math.floor(Math.random() * total);
   }
 
+  // Capture the original button's styles for cloning
+  const originalStyles = element.style.cssText;
+
   function addClone() {
     if (clones.length >= options.maxClones) return;
     const pos = randomPosition({ minX: 10, maxX: 90, minY: 10, maxY: 90 });
     const btn = document.createElement('button');
     btn.type = 'button';
-    // Inherit classes so clones look identical to the seed
+    // Inherit classes and inline styles so clones look identical to the seed
     btn.className = element.className;
+    btn.style.cssText = originalStyles;
     btn.textContent = options.label;
+    // Override position for this clone
     btn.style.position = 'absolute';
     btn.style.left = `${pos.x}%`;
     btn.style.top = `${pos.y}%`;

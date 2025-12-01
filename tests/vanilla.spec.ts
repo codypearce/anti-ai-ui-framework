@@ -4,7 +4,6 @@ import { makePopupChaos } from '../src/vanilla/popupChaos';
 import { makePasswordHell } from '../src/vanilla/passwordHell';
 import { makeSemanticGaslighting } from '../src/vanilla/semanticGaslighting';
 import { makeShiftingInterface } from '../src/vanilla/shiftingInterface';
-import { makeMarqueeInputs } from '../src/vanilla/marqueeInputs';
 import { makeFakeDownloadGrid } from '../src/vanilla/fakeDownloadGrid';
 
 describe('makeButtonRunaway (vanilla)', () => {
@@ -459,254 +458,103 @@ describe('makeShiftingInterface (vanilla)', () => {
   });
 });
 
-describe('makeMarqueeInputs (vanilla)', () => {
-  beforeEach(() => {
-    document.body.innerHTML = '';
-    vi.useFakeTimers();
-  });
-
-  it('should create animated inputs', () => {
-    const container = document.createElement('div');
-    container.style.width = '400px';
-    container.style.height = '300px';
-    document.body.appendChild(container);
-
-    makeMarqueeInputs(container, { count: 4 });
-
-    const inputs = container.querySelectorAll('input');
-    expect(inputs.length).toBe(4);
-  });
-
-  it('should position inputs absolutely', () => {
-    const container = document.createElement('div');
-    container.style.width = '400px';
-    container.style.height = '300px';
-    document.body.appendChild(container);
-
-    makeMarqueeInputs(container, { count: 3 });
-
-    const inputs = container.querySelectorAll('input');
-    inputs.forEach(input => {
-      expect((input as HTMLInputElement).style.position).toBe('absolute');
-    });
-  });
-
-  it('should sync values across all inputs', () => {
-    const container = document.createElement('div');
-    container.style.width = '400px';
-    container.style.height = '300px';
-    document.body.appendChild(container);
-
-    makeMarqueeInputs(container, { count: 3 });
-
-    const inputs = container.querySelectorAll('input');
-    const firstInput = inputs[0] as HTMLInputElement;
-
-    firstInput.value = 'test value';
-    firstInput.dispatchEvent(new Event('input', { bubbles: true }));
-
-    inputs.forEach(input => {
-      expect((input as HTMLInputElement).value).toBe('test value');
-    });
-  });
-
-  it('should call onChange when input changes', () => {
-    const container = document.createElement('div');
-    container.style.width = '400px';
-    container.style.height = '300px';
-    document.body.appendChild(container);
-
-    const onChange = vi.fn();
-    makeMarqueeInputs(container, { count: 2, onChange });
-
-    const input = container.querySelector('input') as HTMLInputElement;
-    input.value = 'changed';
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-
-    expect(onChange).toHaveBeenCalledWith('changed');
-  });
-
-  it('should call onSubmit when Enter key is pressed', () => {
-    const container = document.createElement('div');
-    container.style.width = '400px';
-    container.style.height = '300px';
-    document.body.appendChild(container);
-
-    const onSubmit = vi.fn();
-    makeMarqueeInputs(container, { count: 2, onSubmit });
-
-    const input = container.querySelector('input') as HTMLInputElement;
-    input.value = 'submit value';
-
-    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
-    input.dispatchEvent(enterEvent);
-
-    expect(onSubmit).toHaveBeenCalledWith('submit value');
-  });
-
-  it('should return destroy function that cleans up', () => {
-    const container = document.createElement('div');
-    container.style.width = '400px';
-    container.style.height = '300px';
-    document.body.appendChild(container);
-
-    const { destroy } = makeMarqueeInputs(container, { count: 3 });
-
-    expect(destroy).toBeTypeOf('function');
-
-    destroy();
-
-    const inputs = container.querySelectorAll('input');
-    expect(inputs.length).toBe(0);
-  });
-
-  it('should apply custom className to inputs', () => {
-    const container = document.createElement('div');
-    container.style.width = '400px';
-    container.style.height = '300px';
-    document.body.appendChild(container);
-
-    makeMarqueeInputs(container, { count: 2, className: 'custom-input' });
-
-    const inputs = container.querySelectorAll('input');
-    inputs.forEach(input => {
-      expect(input.className).toBe('custom-input');
-    });
-  });
-
-  it('should set initial value on all inputs', () => {
-    const container = document.createElement('div');
-    container.style.width = '400px';
-    container.style.height = '300px';
-    document.body.appendChild(container);
-
-    makeMarqueeInputs(container, { count: 3, initialValue: 'initial' });
-
-    const inputs = container.querySelectorAll('input');
-    inputs.forEach(input => {
-      expect((input as HTMLInputElement).value).toBe('initial');
-    });
-  });
-});
-
 describe('makeFakeDownloadGrid (vanilla)', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
 
-  it('should create a grid of buttons', () => {
+  it('should create buttons with default buttonCount', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
-    makeFakeDownloadGrid(container, { rows: 2, cols: 2 });
+    const grid = makeFakeDownloadGrid(container);
 
     const buttons = container.querySelectorAll('button');
-    expect(buttons.length).toBe(4);
+    // Default buttonCount is 8, but some buttons are grouped together
+    expect(buttons.length).toBeGreaterThanOrEqual(1);
+    expect(buttons.length).toBeLessThanOrEqual(8);
+
+    grid.destroy();
   });
 
-  it('should randomize real button when realButtonIndex not specified', () => {
+  it('should call onRealClick when real button is clicked', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
     const onRealClick = vi.fn();
     const onFakeClick = vi.fn();
     const grid = makeFakeDownloadGrid(container, {
-      rows: 2,
-      cols: 2,
+      buttonCount: 4,
       onRealClick,
       onFakeClick,
     });
 
     const buttons = container.querySelectorAll('button');
 
-    // Click a fake button (should randomize real button position)
-    const fakeButton = Array.from(buttons).find((b) =>
-      b.getAttribute('aria-label')?.includes('Advertisement')
-    );
+    // Click all buttons to find and test the real one
+    let realClicked = false;
+    buttons.forEach((btn) => {
+      (btn as HTMLButtonElement).click();
+      if (onRealClick.mock.calls.length > 0 && !realClicked) {
+        realClicked = true;
+      }
+    });
 
-    if (fakeButton) {
-      (fakeButton as HTMLButtonElement).click();
-      expect(onFakeClick).toHaveBeenCalled();
-    }
+    // At least one button should be real
+    expect(onRealClick.mock.calls.length).toBeGreaterThanOrEqual(1);
 
     grid.destroy();
   });
 
-  it('should not randomize when realButtonIndex is specified', () => {
+  it('should call onFakeClick when fake button is clicked', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
     const onRealClick = vi.fn();
     const onFakeClick = vi.fn();
     const grid = makeFakeDownloadGrid(container, {
-      rows: 2,
-      cols: 2,
-      realButtonIndex: 1,
+      buttonCount: 4,
       onRealClick,
       onFakeClick,
     });
 
     const buttons = container.querySelectorAll('button');
 
-    // Click fake button
-    (buttons[0] as HTMLButtonElement).click();
-
-    // Real button should still be at index 1
-    expect(buttons[1].getAttribute('aria-label')).toContain('Real');
-
-    grid.destroy();
-  });
-
-  it('should clamp rows and cols to valid ranges', () => {
-    const container = document.createElement('div');
-    document.body.appendChild(container);
-
-    // Test clamping to minimum
-    const grid1 = makeFakeDownloadGrid(container, { rows: 0, cols: 0 });
-    let buttons = container.querySelectorAll('button');
-    expect(buttons.length).toBe(1); // 1x1 grid
-    grid1.destroy();
-
-    // Test clamping to maximum
-    container.innerHTML = '';
-    const grid2 = makeFakeDownloadGrid(container, { rows: 20, cols: 20 });
-    buttons = container.querySelectorAll('button');
-    expect(buttons.length).toBe(100); // 10x10 grid (clamped)
-    grid2.destroy();
-  });
-
-  it('should use custom labels', () => {
-    const container = document.createElement('div');
-    document.body.appendChild(container);
-
-    const grid = makeFakeDownloadGrid(container, {
-      rows: 2,
-      cols: 2,
-      realButtonIndex: 0,
-      labels: { real: 'REAL BUTTON', fake: 'FAKE BUTTON' },
+    // Click all buttons
+    buttons.forEach((btn) => {
+      (btn as HTMLButtonElement).click();
     });
 
-    const buttons = container.querySelectorAll('button');
-    expect(buttons[0].textContent).toBe('REAL BUTTON');
-    expect(buttons[1].textContent).toBe('FAKE BUTTON');
+    // Should have some fake clicks (buttonCount - 1 fake buttons)
+    expect(onFakeClick.mock.calls.length).toBeGreaterThanOrEqual(1);
 
     grid.destroy();
   });
 
-  it('should clamp realButtonIndex to valid range', () => {
+  it('should respect buttonCount option', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
-    const grid = makeFakeDownloadGrid(container, {
-      rows: 2,
-      cols: 2,
-      realButtonIndex: 100, // Out of range, should clamp to 3
-    });
+    const grid = makeFakeDownloadGrid(container, { buttonCount: 3 });
 
     const buttons = container.querySelectorAll('button');
-    const realButton = buttons[3]; // Last button (index 3)
-    expect(realButton.getAttribute('aria-label')).toContain('Real');
+    // With grouped buttons, exact count may vary but should be around buttonCount
+    expect(buttons.length).toBeGreaterThanOrEqual(2);
+    expect(buttons.length).toBeLessThanOrEqual(4);
 
     grid.destroy();
+  });
+
+  it('should destroy and clean up container', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    const grid = makeFakeDownloadGrid(container, { buttonCount: 4 });
+
+    expect(container.children.length).toBeGreaterThan(0);
+
+    grid.destroy();
+
+    expect(container.innerHTML).toBe('');
   });
 });

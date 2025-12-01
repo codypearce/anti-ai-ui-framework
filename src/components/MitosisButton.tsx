@@ -2,6 +2,13 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { randomPosition, type Position } from '../utils/randomPosition';
 import { componentLoggers } from '../utils/logger';
 
+export interface RenderButtonProps {
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  style: React.CSSProperties;
+  className?: string;
+  children: React.ReactNode;
+}
+
 export interface MitosisButtonProps {
   /**
    * Initial number of buttons to start with
@@ -26,6 +33,11 @@ export interface MitosisButtonProps {
    * Callback when the user wins (gets down to 1 button and clicks it)
    */
   onWin?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  /**
+   * Custom render function for buttons. Use this to render your own button component.
+   * The function receives onClick, style, className, and children props that must be applied.
+   */
+  renderButton?: (props: RenderButtonProps) => React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
   children?: React.ReactNode;
@@ -44,6 +56,7 @@ export const MitosisButton: React.FC<MitosisButtonProps> = ({
   multiplyBy = 2,
   onClick,
   onWin,
+  renderButton,
   className,
   style,
   children,
@@ -109,24 +122,36 @@ export const MitosisButton: React.FC<MitosisButtonProps> = ({
     [buttons.length, removalMode, onClick, onWin, maxButtons, multiplyBy, logger]
   );
 
+  const defaultRenderButton = ({ onClick: onClickHandler, style: buttonStyle, className: buttonClassName, children: buttonChildren }: RenderButtonProps) => (
+    <button
+      className={buttonClassName}
+      style={buttonStyle}
+      onClick={onClickHandler}
+      type="button"
+    >
+      {buttonChildren}
+    </button>
+  );
+
+  const renderFn = renderButton ?? defaultRenderButton;
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {buttons.map((btn) => (
-        <button
-          key={btn.id}
-          className={className}
-          style={{
-            position: 'absolute',
-            left: `${btn.pos.x}%`,
-            top: `${btn.pos.y}%`,
-            transform: 'translate(-50%, -50%)',
-            ...style,
-          }}
-          onClick={(e) => handleClick(e, btn.id)}
-          type="button"
-        >
-          {children ?? 'Click me'}
-        </button>
+        <React.Fragment key={btn.id}>
+          {renderFn({
+            onClick: (e) => handleClick(e, btn.id),
+            style: {
+              position: 'absolute',
+              left: `${btn.pos.x}%`,
+              top: `${btn.pos.y}%`,
+              transform: 'translate(-50%, -50%)',
+              ...style,
+            },
+            className,
+            children: children ?? 'Click me',
+          })}
+        </React.Fragment>
       ))}
     </div>
   );

@@ -65,18 +65,145 @@ export interface FloatingBannerAdsOptions {
    * Custom function to create ad element
    */
   createAdElement?: (ad: FloatingAd) => HTMLElement;
+
+  /**
+   * Callback when an ad is clicked
+   */
+  onAdClick?: (ad: FloatingAd) => void;
+
+  /**
+   * Whether to show close buttons on some ads
+   * @default true
+   */
+  showCloseButtons?: boolean;
 }
 
 const DEFAULT_AD_MESSAGES = [
-  'Win $1000 NOW!',
-  'Lose 20lbs Fast!',
-  'Work From Home!',
-  'Hot Singles Near You!',
-  'VIRUS DETECTED!',
-  'Free iPhone 15!',
-  'Get Rich Quick!',
-  "You're a Winner!",
+  'YOU WON $10,000!!!',
+  'HOT SINGLES NEAR YOU',
+  'VIRUS DETECTED!!!',
+  'FREE iPHONE 15 PRO',
+  'CLICK HERE NOW!!!',
+  'CONGRATULATIONS!!!',
+  'YOUR PC IS AT RISK',
+  'DOWNLOAD NOW!!!',
 ];
+
+const AD_STYLES = [
+  // Classic spam banner
+  {
+    bg: 'linear-gradient(135deg, #ff0000, #cc0000)',
+    color: '#ffff00',
+    border: '3px dashed #ffff00',
+    fontSize: '14px',
+    padding: '12px 20px',
+    borderRadius: '0',
+  },
+  // Fake virus alert
+  {
+    bg: '#1a1a2e',
+    color: '#ff4444',
+    border: '2px solid #ff4444',
+    fontSize: '12px',
+    padding: '10px 14px',
+    borderRadius: '4px',
+    fontFamily: 'monospace',
+  },
+  // Flashy winner
+  {
+    bg: 'linear-gradient(45deg, #ffd700, #ff8c00, #ffd700)',
+    color: '#000',
+    border: '3px solid #8b4513',
+    fontSize: '15px',
+    padding: '14px 22px',
+    borderRadius: '8px',
+    textShadow: '1px 1px 0 #fff',
+  },
+  // Dating site pink
+  {
+    bg: 'linear-gradient(135deg, #ff69b4, #ff1493)',
+    color: '#fff',
+    border: '2px solid #fff',
+    fontSize: '13px',
+    padding: '10px 16px',
+    borderRadius: '20px',
+  },
+  // Fake download button
+  {
+    bg: 'linear-gradient(180deg, #5cb85c, #449d44)',
+    color: '#fff',
+    border: '1px solid #398439',
+    fontSize: '14px',
+    padding: '12px 24px',
+    borderRadius: '4px',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+  },
+  // Urgent red box
+  {
+    bg: '#fff',
+    color: '#cc0000',
+    border: '4px solid #cc0000',
+    fontSize: '13px',
+    padding: '10px 16px',
+    borderRadius: '0',
+    textTransform: 'uppercase',
+  },
+  // Neon cyber
+  {
+    bg: '#0d0d0d',
+    color: '#0ff',
+    border: '2px solid #0ff',
+    fontSize: '12px',
+    padding: '10px 14px',
+    borderRadius: '2px',
+    textShadow: '0 0 10px #0ff',
+    fontFamily: 'monospace',
+  },
+];
+
+const AD_ANIMATIONS = [
+  'adPulse 0.3s ease-in-out infinite alternate',
+  'adShake 0.15s ease-in-out infinite',
+  'adBounce 0.5s ease-in-out infinite',
+  'adGlow 1s ease-in-out infinite',
+  'adWiggle 0.4s ease-in-out infinite',
+  'none',
+];
+
+// Inject keyframes once
+let stylesInjected = false;
+function injectStyles() {
+  if (stylesInjected) return;
+  stylesInjected = true;
+
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes adPulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
+    @keyframes adShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
+    }
+    @keyframes adBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    @keyframes adGlow {
+      0%, 100% { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); }
+      50% { box-shadow: 0 4px 24px rgba(255, 255, 0, 0.6), 0 0 40px rgba(255, 0, 0, 0.4); }
+    }
+    @keyframes adWiggle {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-2deg); }
+      75% { transform: rotate(2deg); }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 /**
  * Creates floating banner ads that spawn at random positions with vanilla JavaScript.
@@ -120,7 +247,12 @@ export function createFloatingBannerAds(
     minY = 20,
     maxY = 80,
     createAdElement,
+    onAdClick,
+    showCloseButtons = true,
   } = options;
+
+  // Inject animation styles
+  injectStyles();
 
   // Ensure container is positioned
   if (getComputedStyle(container).position === 'static') {
@@ -132,24 +264,71 @@ export function createFloatingBannerAds(
 
   const createDefaultAdElement = (ad: FloatingAd): HTMLElement => {
     const adElement = document.createElement('div');
-    adElement.textContent = ad.text;
+
+    // Pick random style and animation
+    const style = AD_STYLES[Math.floor(Math.random() * AD_STYLES.length)];
+    const animation = AD_ANIMATIONS[Math.floor(Math.random() * AD_ANIMATIONS.length)];
 
     // Apply styles
     Object.assign(adElement.style, {
       position: 'absolute',
       left: `${ad.x}%`,
       top: `${ad.y}%`,
-      background: 'linear-gradient(135deg, #ff0080, #ff8c00)',
-      color: 'white',
-      padding: '12px 20px',
-      borderRadius: '8px',
+      background: style.bg,
+      color: style.color,
+      padding: style.padding,
+      borderRadius: style.borderRadius,
+      border: style.border,
       fontWeight: 'bold',
-      fontSize: '14px',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+      fontSize: style.fontSize,
+      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.5)',
       zIndex: '1000',
       cursor: 'pointer',
       whiteSpace: 'nowrap',
+      animation: animation,
+      fontFamily: style.fontFamily || 'inherit',
+      textShadow: style.textShadow || 'none',
+      textTransform: style.textTransform || 'none',
+      letterSpacing: style.letterSpacing || 'normal',
     });
+
+    adElement.textContent = ad.text;
+
+    // Add click handler
+    if (onAdClick) {
+      adElement.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onAdClick(ad);
+      });
+    }
+
+    // Add close button to some ads
+    if (showCloseButtons && Math.random() > 0.5) {
+      const closeBtn = document.createElement('span');
+      closeBtn.textContent = 'X';
+      Object.assign(closeBtn.style, {
+        position: 'absolute',
+        top: '-8px',
+        right: '-8px',
+        width: '18px',
+        height: '18px',
+        background: '#666',
+        color: '#fff',
+        fontSize: '10px',
+        fontWeight: 'bold',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+      });
+      closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        adElement.remove();
+        activeAds.delete(adElement);
+      });
+      adElement.appendChild(closeBtn);
+    }
 
     return adElement;
   };

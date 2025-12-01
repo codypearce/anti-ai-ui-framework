@@ -8,12 +8,38 @@ export interface GaslightButtonDef {
   actualAction: GaslightAction; // what it actually does
 }
 
+/**
+ * Props passed to renderButton function
+ */
+export interface RenderButtonProps {
+  /** The button definition (label and actualAction) */
+  button: GaslightButtonDef;
+  /** Click handler that triggers the actual action */
+  onClick: () => void;
+  /** Index of this button in the array */
+  index: number;
+  /** Default styles for the button */
+  style: React.CSSProperties;
+}
+
 export interface SemanticGaslightingProps {
   buttons: GaslightButtonDef[];
   onSubmit?: () => void;
   onCancel?: () => void;
   onReset?: () => void;
   onAction?: (def: GaslightButtonDef) => void;
+  /**
+   * Custom render function for buttons
+   */
+  renderButton?: (props: RenderButtonProps) => React.ReactNode;
+  /**
+   * Custom className for the container
+   */
+  className?: string;
+  /**
+   * Custom styles for the container
+   */
+  style?: React.CSSProperties;
 }
 
 export const SemanticGaslighting: React.FC<SemanticGaslightingProps> = ({
@@ -22,6 +48,9 @@ export const SemanticGaslighting: React.FC<SemanticGaslightingProps> = ({
   onCancel,
   onReset,
   onAction,
+  renderButton,
+  className,
+  style,
 }) => {
   const logger = React.useMemo(() => componentLoggers.semanticGaslighting, []);
 
@@ -43,17 +72,40 @@ export const SemanticGaslighting: React.FC<SemanticGaslightingProps> = ({
     }
   };
 
+  const defaultButtonStyle: React.CSSProperties = {
+    background: '#3b82f6',
+    color: '#fff',
+    border: '1px solid #0f172a',
+    padding: '8px 12px',
+    cursor: 'pointer',
+  };
+
+  const defaultRenderButton = ({ button, onClick, style: buttonStyle }: RenderButtonProps) => (
+    <button type="button" onClick={onClick} style={buttonStyle}>
+      {button.label}
+    </button>
+  );
+
+  const buttonRenderer = renderButton ?? defaultRenderButton;
+
+  const containerStyle: React.CSSProperties = {
+    display: 'flex',
+    gap: 8,
+    flexWrap: 'wrap',
+    ...style,
+  };
+
   return (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    <div className={className} style={containerStyle}>
       {buttons.map((b, i) => (
-        <button
-          key={`${b.label}-${i}`}
-          type="button"
-          onClick={doAction(b)}
-          style={{ background: '#3b82f6', color: '#fff', border: '1px solid #0f172a', padding: '8px 12px' }}
-        >
-          {b.label}
-        </button>
+        <React.Fragment key={`${b.label}-${i}`}>
+          {buttonRenderer({
+            button: b,
+            onClick: doAction(b),
+            index: i,
+            style: defaultButtonStyle,
+          })}
+        </React.Fragment>
       ))}
     </div>
   );

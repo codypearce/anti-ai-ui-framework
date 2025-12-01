@@ -6,6 +6,13 @@ describe('createGlitchText (vanilla)', () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
+    // Mock requestAnimationFrame
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+      return setTimeout(() => cb(performance.now()), 16) as unknown as number;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
+      clearTimeout(id);
+    });
     container = document.createElement('div');
     document.body.appendChild(container);
   });
@@ -26,24 +33,38 @@ describe('createGlitchText (vanilla)', () => {
     expect(cleanup).toBeInstanceOf(Function);
   });
 
-  it('cycles through variations', async () => {
+  it('shuffles character positions over time', async () => {
     createGlitchText({
       container,
-      variations: ['A', 'B', 'C'],
-      changeInterval: 500,
+      text: 'ABCD',
+      shuffleInterval: 100,
+      shuffleChance: 1,
     });
 
-    const initialText = container.textContent;
-    await vi.advanceTimersByTimeAsync(500);
-    const newText = container.textContent;
+    const getCharacters = () => {
+      const spans = container.querySelectorAll('span');
+      return Array.from(spans).map((s) => s.textContent).join('');
+    };
 
-    expect(['A', 'B', 'C']).toContain(initialText);
-    expect(['A', 'B', 'C']).toContain(newText);
+    const initial = getCharacters();
+    expect(initial).toBe('ABCD');
+
+    // Advance time to trigger shuffles
+    await vi.advanceTimersByTimeAsync(200);
+
+    // Characters should still be there (just possibly reordered)
+    const shuffled = getCharacters();
+    expect(shuffled.split('').sort().join('')).toBe('ABCD');
   });
 
-  it('uses custom tag', () => {
-    createGlitchText({ container, text: 'Title', tag: 'h1' });
-    expect(container.querySelector('h1')).not.toBeNull();
+  it('applies custom wrapper styles', () => {
+    createGlitchText({
+      container,
+      text: 'Title',
+      wrapperStyle: 'color: red;',
+    });
+    const wrapper = container.querySelector('div') as HTMLElement;
+    expect(wrapper.style.color).toBe('red');
   });
 
   it('cleans up on destroy', () => {
