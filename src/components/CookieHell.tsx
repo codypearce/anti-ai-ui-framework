@@ -28,6 +28,7 @@ export interface RenderCategoryProps {
   };
   index: number;
   isExpanded: boolean;
+  showDisableHint: boolean;
   onToggleExpand: () => void;
   onToggleCategory: (enabled: boolean) => void;
   onTogglePartner: (partnerIndex: number, enabled: boolean) => void;
@@ -147,6 +148,8 @@ export const CookieHell: React.FC<CookieHellProps> = ({
     buildCategories(categoryCount, partnersPerCategory)
   );
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+  const [disableHintCategory, setDisableHintCategory] = useState<number | null>(null);
+  const [globalHint, setGlobalHint] = useState<string | null>(null);
 
   const toggleCategory = (catIdx: number, enabled: boolean) => {
     const cat = categories[catIdx];
@@ -154,7 +157,14 @@ export const CookieHell: React.FC<CookieHellProps> = ({
 
     // Category toggle only enables all, never disables - user must click each partner individually
     if (!enabled) {
-      // Trying to disable? Nope, just keep it enabled
+      // Show hint that they need to disable partners individually
+      setDisableHintCategory(catIdx);
+      setExpandedCategories(prev => new Set(prev).add(catIdx));
+      setGlobalHint('Please manually uncheck each partner to ensure data accuracy');
+      setTimeout(() => {
+        setDisableHintCategory(null);
+        setGlobalHint(null);
+      }, 4000);
       return;
     }
 
@@ -277,6 +287,7 @@ export const CookieHell: React.FC<CookieHellProps> = ({
     category: cat,
     index: _catIdx,
     isExpanded,
+    showDisableHint,
     onToggleExpand,
     onToggleCategory: handleCategoryToggle,
     onTogglePartner: handlePartnerToggle,
@@ -362,6 +373,19 @@ export const CookieHell: React.FC<CookieHellProps> = ({
         </button>
       </div>
 
+      {/* Disable hint */}
+      {showDisableHint && (
+        <div style={{
+          padding: '8px 12px',
+          background: '#fef3c7',
+          borderBottom: '1px solid #fcd34d',
+          fontSize: '12px',
+          color: '#92400e',
+        }}>
+          To disable, uncheck each partner individually below
+        </div>
+      )}
+
       {/* Partners list */}
       {isExpanded && (
         <div style={{ padding: '8px 12px', background: '#fafafa', maxHeight: '200px', overflowY: 'auto' }}>
@@ -403,6 +427,22 @@ export const CookieHell: React.FC<CookieHellProps> = ({
 
   return (
     <div className={className} style={style}>
+      {/* Global hint message */}
+      {globalHint && (
+        <div style={{
+          padding: '12px 16px',
+          marginBottom: '12px',
+          background: '#fef3c7',
+          border: '1px solid #fcd34d',
+          borderRadius: '8px',
+          fontSize: '13px',
+          color: '#92400e',
+          textAlign: 'center',
+        }}>
+          {globalHint}
+        </div>
+      )}
+
       {/* Accept All button */}
       {acceptButtonRenderer({ onClick: handleAcceptAll })}
 
@@ -414,6 +454,7 @@ export const CookieHell: React.FC<CookieHellProps> = ({
               category: cat,
               index: catIdx,
               isExpanded: expandedCategories.has(catIdx),
+              showDisableHint: disableHintCategory === catIdx,
               onToggleExpand: () => toggleExpand(catIdx),
               onToggleCategory: (enabled) => toggleCategory(catIdx, enabled),
               onTogglePartner: (pIdx, enabled) => togglePartner(catIdx, pIdx, enabled),

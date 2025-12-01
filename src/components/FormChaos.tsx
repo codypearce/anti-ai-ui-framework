@@ -42,9 +42,11 @@ export interface FormChaosProps {
   transition?: string;
 
   /**
-   * Custom render function for form content
+   * Form content. Can be either:
+   * - A render function that receives (rotation, scale) for dynamic content
+   * - Regular React children for static content
    */
-  children?: (rotation: number, scale: number) => React.ReactNode;
+  children?: ((rotation: number, scale: number) => React.ReactNode) | React.ReactNode;
 
   /**
    * Additional CSS class for the container
@@ -156,54 +158,57 @@ export function FormChaos({
     ...formStyle,
   };
 
+  // Determine what to render
+  const content = typeof children === 'function'
+    ? children(rotation, scale)
+    : children || (
+        <>
+          <label
+            style={{
+              display: 'block',
+              marginBottom: '8px',
+              fontWeight: 600,
+              color: '#0a2540',
+            }}
+          >
+            Message
+          </label>
+          <input
+            type="text"
+            placeholder="Enter message..."
+            style={{
+              display: 'block',
+              width: '100%',
+              padding: '8px 12px',
+              marginBottom: '12px',
+              border: '1px solid #e3e8ee',
+              borderRadius: '4px',
+              fontSize: '0.9375rem',
+              boxSizing: 'border-box',
+            }}
+          />
+          <button
+            type="button"
+            style={{
+              padding: '8px 16px',
+              background: '#0066cc',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '0.9375rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Submit
+          </button>
+        </>
+      );
+
   return (
     <div className={className} style={containerStyle}>
       <div className={formClassName} style={transformStyle}>
-        {children ? (
-          children(rotation, scale)
-        ) : (
-          <>
-            <label
-              style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: 600,
-                color: '#0a2540',
-              }}
-            >
-              Message
-            </label>
-            <input
-              type="text"
-              placeholder="Enter message..."
-              style={{
-                display: 'block',
-                width: '100%',
-                padding: '8px 12px',
-                marginBottom: '12px',
-                border: '1px solid #e3e8ee',
-                borderRadius: '4px',
-                fontSize: '0.9375rem',
-                boxSizing: 'border-box',
-              }}
-            />
-            <button
-              type="button"
-              style={{
-                padding: '8px 16px',
-                background: '#0066cc',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '0.9375rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Submit
-            </button>
-          </>
-        )}
+        {content}
       </div>
     </div>
   );

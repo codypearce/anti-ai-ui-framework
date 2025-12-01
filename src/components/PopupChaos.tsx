@@ -21,9 +21,12 @@ export interface PopupChaosProps {
    */
   renderPopup?: (props: RenderPopupProps) => React.ReactNode;
   /**
-   * @deprecated Use renderPopup instead
+   * Custom content. Can be either:
+   * - A render function that receives (popup, closePopup) for custom popup rendering
+   * - Regular React children for static content alongside popups
+   * @deprecated Use renderPopup instead for render function pattern
    */
-  children?: (popup: PopupData, closePopup: () => void) => React.ReactNode;
+  children?: ((popup: PopupData, closePopup: () => void) => React.ReactNode) | React.ReactNode;
   /**
    * If true, popups are contained within a relative container instead of fixed to viewport.
    * Default: false (popups appear fixed on the page)
@@ -155,9 +158,13 @@ export const PopupChaos: React.FC<PopupChaosProps> = ({
       // New API: pass props object
       return renderPopup({ popup, closePopup: close, style });
     } else if (children) {
-      // Deprecated API: pass separate arguments
-      const modifiedPopup = { ...popup, left: position.left, top: position.top };
-      return children(modifiedPopup as PopupData, close);
+      if (typeof children === 'function') {
+        // Deprecated API: pass separate arguments
+        const modifiedPopup = { ...popup, left: position.left, top: position.top };
+        return children(modifiedPopup as PopupData, close);
+      }
+      // Regular children - render default popup
+      return null;
     }
     return null;
   };

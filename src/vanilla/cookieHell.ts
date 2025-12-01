@@ -93,6 +93,31 @@ export function makeCookieHell(options: CookieHellOptions) {
   // Main wrapper
   const wrapper = document.createElement('div');
 
+  // Global hint message (hidden by default)
+  const hintBox = document.createElement('div');
+  Object.assign(hintBox.style, {
+    display: 'none',
+    padding: '12px 16px',
+    marginBottom: '12px',
+    background: '#fef3c7',
+    border: '1px solid #fcd34d',
+    borderRadius: '8px',
+    fontSize: '13px',
+    color: '#92400e',
+    textAlign: 'center'
+  });
+  hintBox.textContent = 'Please manually uncheck each partner to ensure data accuracy';
+  wrapper.appendChild(hintBox);
+
+  let hintTimeout: ReturnType<typeof setTimeout> | null = null;
+  function showHint() {
+    hintBox.style.display = 'block';
+    if (hintTimeout) clearTimeout(hintTimeout);
+    hintTimeout = setTimeout(() => {
+      hintBox.style.display = 'none';
+    }, 4000);
+  }
+
   // Accept All button - big and prominent
   const acceptBtn = document.createElement('button');
   Object.assign(acceptBtn.style, {
@@ -193,25 +218,6 @@ export function makeCookieHell(options: CookieHellOptions) {
       toggleWrap.appendChild(toggleInput);
       toggleWrap.appendChild(toggleSlider);
 
-      toggleInput.addEventListener('change', () => {
-        if (cat.required) {
-          toggleInput.checked = true;
-          return;
-        }
-        // Category toggle only enables all, never disables - user must click each partner individually
-        if (!toggleInput.checked) {
-          // Trying to disable? Nope, just re-enable it
-          toggleInput.checked = true;
-          cat.enabled = true;
-          renderCategories();
-          return;
-        }
-        // Enabling is fine - turn everything on
-        cat.enabled = true;
-        cat.partners.forEach(p => p.enabled = true);
-        renderCategories();
-      });
-
       // Category info
       const info = document.createElement('div');
       info.style.flex = '1';
@@ -310,6 +316,30 @@ export function makeCookieHell(options: CookieHellOptions) {
         expanded = !expanded;
         partnersList.style.display = expanded ? 'block' : 'none';
         expandBtn.textContent = expanded ? 'Hide partners' : `View ${cat.partners.length} partners`;
+      });
+
+      // Now set up the toggle input listener (needs access to expanded and partnersList)
+      toggleInput.addEventListener('change', () => {
+        if (cat.required) {
+          toggleInput.checked = true;
+          return;
+        }
+        // Category toggle only enables all, never disables - user must click each partner individually
+        if (!toggleInput.checked) {
+          // Trying to disable? Nope, just re-enable it and show hint
+          toggleInput.checked = true;
+          cat.enabled = true;
+          showHint();
+          // Also expand this category to show partners
+          expanded = true;
+          partnersList.style.display = 'block';
+          expandBtn.textContent = 'Hide partners';
+          return;
+        }
+        // Enabling is fine - turn everything on
+        cat.enabled = true;
+        cat.partners.forEach(p => p.enabled = true);
+        renderCategories();
       });
 
       categoriesWrap.appendChild(catBox);

@@ -99,10 +99,11 @@ export interface TrafficLightFormProps {
   onChange?: (values: Record<string, string>) => void;
 
   /**
-   * Custom render function to use your own inputs.
-   * Receives props to build your own form UI.
+   * Custom content. Can be either:
+   * - A render function that receives props to build your own form UI
+   * - Regular React children for static content
    */
-  children?: (props: TrafficLightRenderProps) => React.ReactNode;
+  children?: ((props: TrafficLightRenderProps) => React.ReactNode) | React.ReactNode;
 
   /**
    * Additional CSS class name
@@ -321,18 +322,22 @@ export function TrafficLightForm({
     };
   };
 
-  // Render prop mode
+  // Render prop mode or regular children
   if (children) {
-    return (
-      <>
-        {children({
-          getInputProps,
-          lightStates: fieldStates.map((s) => s.state),
-          values,
-          TrafficLight,
-        })}
-      </>
-    );
+    if (typeof children === 'function') {
+      return (
+        <>
+          {children({
+            getInputProps,
+            lightStates: fieldStates.map((s) => s.state),
+            values,
+            TrafficLight,
+          })}
+        </>
+      );
+    }
+    // Regular children - just render them
+    return <>{children}</>;
   }
 
   // Default render mode

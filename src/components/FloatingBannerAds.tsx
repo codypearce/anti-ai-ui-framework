@@ -68,9 +68,11 @@ export interface FloatingBannerAdsProps {
   maxY?: number;
 
   /**
-   * Custom render function for all ads (full control)
+   * Custom content. Can be either:
+   * - A render function that receives the ads array for full control
+   * - Regular React children (ads will render with default styling)
    */
-  children?: (ads: FloatingAd[]) => React.ReactNode;
+  children?: ((ads: FloatingAd[]) => React.ReactNode) | React.ReactNode;
 
   /**
    * Custom render function for individual ads
@@ -210,7 +212,12 @@ export function FloatingBannerAds({
   }, [adMessages, spawnInterval, adLifetime, minX, maxX, minY, maxY, logger]);
 
   if (children) {
-    return <>{children(ads)}</>;
+    // If children is a function, call it with ads
+    if (typeof children === 'function') {
+      return <>{children(ads)}</>;
+    }
+    // Otherwise, render children directly (ads still spawn but user controls layout)
+    return <>{children}</>;
   }
 
   const containerStyle: React.CSSProperties = {

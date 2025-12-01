@@ -18,10 +18,11 @@ export interface InputMisdirectionProps {
   onMisdirect?: (intended: number, actual: number) => void;
 
   /**
-   * Custom render function to use your own inputs.
-   * Receives an object with handlers to attach to each input.
+   * Custom content. Can be either:
+   * - A render function that receives handlers to attach to each input
+   * - Regular React children for static content
    */
-  children?: (props: {
+  children?: ((props: {
     getInputProps: (index: number) => {
       value: string;
       onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -30,7 +31,7 @@ export interface InputMisdirectionProps {
     values: string[];
     targetMap: number[];
     shuffleNow: () => void;
-  }) => React.ReactNode;
+  }) => React.ReactNode) | React.ReactNode;
 
   className?: string;
   style?: React.CSSProperties;
@@ -136,9 +137,13 @@ export function InputMisdirection({
     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(index, e),
   });
 
-  // Render prop mode
+  // Render prop mode or regular children
   if (children) {
-    return <>{children({ getInputProps, values, targetMap, shuffleNow: shuffleTargets })}</>;
+    if (typeof children === 'function') {
+      return <>{children({ getInputProps, values, targetMap, shuffleNow: shuffleTargets })}</>;
+    }
+    // Regular children - just render them
+    return <>{children}</>;
   }
 
   // Default render mode
