@@ -1,7 +1,7 @@
 <div align="center">
   <img src="header.png" alt="Anti-AI UI Framework" width="600" />
 
-  <p>The first UI library designed to be intentionally hostile to AI. If you struggle with these patterns, well...</p>
+  <p><strong>The first framework more hostile than Adobe's cancellation flow.</strong></p>
 
 [![npm](https://img.shields.io/npm/v/anti-ai-ui.svg)](https://www.npmjs.com/package/anti-ai-ui)
 [![node](https://img.shields.io/node/v/anti-ai-ui.svg?label=node)](https://www.npmjs.com/package/anti-ai-ui)
@@ -20,33 +20,33 @@
     <a href="https://codinhood.com/anti-ai-ui">Anti-AI Test</a>
     &nbsp;|&nbsp;
     <a href="https://codinhood.com/anti-ai-ui-framework">Documentation</a>
+    &nbsp;|&nbsp;
+    <a href="https://codinhood.com/post/introducing-anti-ai-ui-framework">Intro Article</a>
 
   </h3>
 </div>
 
 <div align="center">
   <h3>
-    <a href="https://www.youtube.com/watch?v=g7xtondIT10">Chatgpt Atlas vs Dark Internet Patterns</a>
+    <a href="https://www.youtube.com/watch?v=g7xtondIT10">ChatGPT Atlas vs Dark Internet Patterns</a>
   </h3>
 </div>
 
 ## Why?
 
-For 30 years, websites have tortured humans with hostile design patterns.
+AI took your job. Then it took your browser's job.
 
-Microscopic close buttons. Fake download links. Cookie consent mazes. Passwords that demand uppercase, lowercase, a number, a symbol, and the blood of your firstborn.
+Every product update has AI. Every startup pitch has AI. Every tech conference has AI. You can't return your limited edition pink Stanley tumbler to Target without the customer service guy telling you about his ChatGPT wrapper startup that's about to blow up.
 
-We adapted. We learned to distrust interfaces. We developed the muscle memory to find the real X button.
+And now it's gotten worse. With the release of ChatGPT's Atlas and other AI browsers, AI can click buttons and fill out forms. It can navigate the web. It's coming for the entire internet.
 
-Now AI browsers can move a mouse and click buttons. They can fill out forms. They can navigate the web.
+You could make it easy for them. Or you could not.
 
-But can they handle the patterns we've been suffering through for decades?
+**Let's make it harder.**
 
-**This framework lets you find out.**
+We already have patterns that frustrate users. Dark patterns have tortured humans for decades. Microscopic close buttons. Fake download links. Cookie consent mazes five layers deep. We adapted. We learned to find the real X button surrounded by decoys.
 
-20 components. Buttons that run away. Forms that rotate. Labels that lie. Cookie banners nested five layers deep.
-
-Everything humans have endured and some specifically created to frustrate AI browsers. Now available as React components and vanilla JS.
+Let's take these patterns and adapt them for AI. [Read the full intro article](https://codinhood.com/post/introducing-anti-ai-ui-framework).
 
 <div align="center">
   <img src="public/traffic-light-forms.gif" alt="Traffic Light Forms" width="500" /><br />
@@ -58,13 +58,27 @@ Everything humans have endured and some specifically created to frustrate AI bro
 
 ---
 
+## What's In It
+
+The Anti-AI UI Framework is a UI library that provides 20 AI-hostile components. You can install it with npm and use it on any website. It has everything you need to make AI miserable:
+
+- 20 components
+- React and vanilla JS
+- Zero dependencies
+- TypeScript
+- Tree-shakeable, so you only ship the suffering you need
+- Works with React, Vue, Angular, Svelte, Next.js, HTMX, jQuery. Anything that can run JavaScript.
+- 403 unit tests. Because hostile interfaces still need to be reliable. The button should always run away. The password requirements should always change. Consistency matters, even when nothing else does.
+
+MIT licensed, because suffering should be free.
+
+---
+
 ## Install
 
 ```bash
 npm install anti-ai-ui
 ```
-
-React is optional. Vanilla JavaScript implementations included for all components. jQuery is not optional.
 
 ---
 
@@ -124,52 +138,53 @@ createCookieHell({
 
 ---
 
-## Components
+## The Patterns
 
-### Interaction
+The framework contains two types of hostile patterns.
 
-| Component         | Description                               |
-| ----------------- | ----------------------------------------- |
-| **RunawayButton** | Evades cursor interaction                 |
-| **MitosisButton** | Splits into multiple buttons when clicked |
-| **GravityField**  | Elements respond to cursor proximity      |
+**Intentionally AI-Hostile.** New patterns specifically created to exploit how AI interacts with websites. Traffic lights that gate form submissions. Pendulum fields powered by keystrokes. Three identical forms that shuffle positions, only one of which is real.
 
-### Forms
+**Naturally Hostile.** Dark patterns humans have adapted to over decades but AI encounters for the first time. Microscopic close buttons. Cookie consent mazes. Password requirements that change as you type.
 
-| Component                 | Description                              |
-| ------------------------- | ---------------------------------------- |
-| **PasswordHell**          | Validation requirements that evolve      |
-| **FormChaos**             | Rotation and scale transformations       |
-| **LabelPositionSwap**     | Labels that shuffle between fields       |
-| **ShiftingInterface**     | Elements that shift randomly             |
-| **TabIndexRandomization** | Randomized tab order                     |
-| **ThreeFormCarousel**     | Rotating form carousel                   |
-| **TrafficLightForm**      | Fields only editable when "green"        |
-| **PendulumFields**        | Momentum-based fields that need activity |
-| **InputMisdirection**     | Input focus jumps to wrong field         |
+### Movement & Chaos
 
-### Overlays
+| Component             | Description                                                                 |
+| --------------------- | --------------------------------------------------------------------------- |
+| **GravityField**      | Buttons orbit around invisible gravity wells. Click one and it drifts away. |
+| **PendulumFields**    | Inputs swing like pendulums. Keep typing to maintain momentum.              |
+| **ThreeFormCarousel** | Three rotating forms. Only one is real. The other two submit to nowhere.    |
+| **RunawayButton**     | Try to hover over it. It moves faster than you can track.                   |
+| **FormChaos**         | The entire form rotates and scales randomly.                                |
+| **MitosisButton**     | Click the wrong button and more spawn. Only one is real at any time.        |
+| **ShiftingInterface** | Form elements randomly shift position, change colors, and duplicate.        |
 
-| Component             | Description             |
-| --------------------- | ----------------------- |
-| **CookieHell**        | Nested consent banners  |
-| **PopupChaos**        | Ordered popup dismissal |
-| **FloatingBannerAds** | Moving banner ads       |
+### Deception & Confusion
 
-### Visual
+| Component               | Description                                                              |
+| ----------------------- | ------------------------------------------------------------------------ |
+| **TrafficLightForm**    | Fields only accept input when their traffic light is green.              |
+| **FakeMarqueeFields**   | Fake input fields scroll across the screen. AI tries to fill them.       |
+| **InputMisdirection**   | Type in one field, your text appears in another.                         |
+| **GlitchText**          | Characters shuffle positions. Humans read it. OCR gets scrambled output. |
+| **SemanticGaslighting** | "Cancel" submits. "Submit" cancels. Green means danger.                  |
 
-| Component                  | Description                        |
-| -------------------------- | ---------------------------------- |
-| **FakeDownloadGrid**       | One real button among decoys       |
-| **GlitchText**             | Characters shuffle positions       |
-| **MicroscopicCloseButton** | Tiny close buttons among decoys    |
-| **FakeMarqueeFields**      | Scrolling decoy fields             |
+### Navigation Breaking
 
-### Semantic
+| Component                 | Description                                                        |
+| ------------------------- | ------------------------------------------------------------------ |
+| **TabIndexRandomization** | Tab order shuffles every 3 seconds. Breaks automated form filling. |
+| **LabelPositionSwap**     | Labels randomly shuffle between different input fields.            |
 
-| Component               | Description                |
-| ----------------------- | -------------------------- |
-| **SemanticGaslighting** | Labels don't match actions |
+### Naturally Hostile
+
+| Component                  | Description                                                           |
+| -------------------------- | --------------------------------------------------------------------- |
+| **MicroscopicCloseButton** | 4x4 pixel real button surrounded by decoys.                           |
+| **CookieHell**             | Nested cookie consent dialogs. Five layers deep.                      |
+| **PasswordHell**           | Password requirements that change as you type. Requirements multiply. |
+| **PopupChaos**             | Nested popups that must be closed in specific order.                  |
+| **FloatingBannerAds**      | Ads that cover the content you want. They spawn every few seconds.    |
+| **FakeDownloadGrid**       | One real download button. Many fakes.                                 |
 
 ---
 
@@ -203,3 +218,5 @@ Full docs and interactive demos at [codinhood.com/anti-ai-ui-framework](https://
 ## License
 
 MIT
+
+AI took your job. Now take its time.
