@@ -16,12 +16,12 @@ export interface MitosisButtonProps {
    */
   initialCount?: number;
   /**
-   * Maximum number of buttons before they start being removed on click instead of multiplying
+   * Maximum number of buttons allowed. When reached, oldest buttons are removed on new spawns.
    * Default: 20
    */
   maxButtons?: number;
   /**
-   * Number of new buttons to spawn when clicking a button (during multiplication phase)
+   * Number of new buttons to spawn when clicking a fake button
    * Default: 2
    */
   multiplyBy?: number;
@@ -36,11 +36,11 @@ export interface MitosisButtonProps {
    */
   autoSpawnInterval?: number;
   /**
-   * Callback when a button is clicked (but not the winning click)
+   * Callback when a fake button is clicked (spawns more buttons)
    */
-  onClick?: (event: React.MouseEvent<HTMLButtonElement>, buttonId: number) => void;
+  onFakeClick?: (event: React.MouseEvent<HTMLButtonElement>, buttonId: number) => void;
   /**
-   * Callback when the user wins (gets down to 1 button and clicks it)
+   * Callback when the real button is clicked (user wins)
    */
   onWin?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   /**
@@ -79,7 +79,7 @@ export const MitosisButton: React.FC<MitosisButtonProps> = ({
   multiplyBy = 2,
   driftSpeed = 0.15,
   autoSpawnInterval = 1200,
-  onClick,
+  onFakeClick,
   onWin,
   renderButton,
   className,
@@ -104,10 +104,19 @@ export const MitosisButton: React.FC<MitosisButtonProps> = ({
     });
   });
 
-  const [removalMode, setRemovalMode] = useState(false);
+  // Track which button is the "real" one (index into buttons array)
+  const [realIndex, setRealIndex] = useState(() => Math.floor(Math.random() * initialCount));
+
   const animationRef = useRef<number | null>(null);
   const buttonsRef = useRef(buttons);
   buttonsRef.current = buttons;
+
+  // Shuffle which button is real
+  const shuffleRealIndex = useCallback((buttonCount: number) => {
+    const newIndex = Math.floor(Math.random() * buttonCount);
+    setRealIndex(newIndex);
+    return newIndex;
+  }, []);
 
   // Animation loop for drifting
   useEffect(() => {
@@ -158,13 +167,11 @@ export const MitosisButton: React.FC<MitosisButtonProps> = ({
 
   // Auto-spawn timer
   useEffect(() => {
-    if (autoSpawnInterval <= 0 || removalMode) return;
+    if (autoSpawnInterval <= 0) return;
     if (typeof window === 'undefined') return;
 
     const timer = setInterval(() => {
       setButtons((prev) => {
-        if (prev.length >= maxButtons) return prev;
-
         // Pick a random parent to spawn from
         const parent = prev[Math.floor(Math.random() * prev.length)];
         if (!parent) return prev;
@@ -183,13 +190,28 @@ export const MitosisButton: React.FC<MitosisButtonProps> = ({
           opacity: 1,
         };
 
-        logger.debug('MitosisButton: auto-spawn', { total: prev.length + 1 });
-        return [...prev, newButton];
+        let newButtons = [...prev, newButton];
+
+        // If over max, remove oldest buttons
+        if (newButtons.length > maxButtons) {
+          newButtons = newButtons.slice(newButtons.length - maxButtons);
+        }
+
+        logger.debug('MitosisButton: auto-spawn', { total: newButtons.length });
+        return newButtons;
       });
+
+      // Occasionally shuffle which button is real (30% chance on auto-spawn)
+      if (Math.random() < 0.3) {
+        setButtons((prev) => {
+          shuffleRealIndex(prev.length);
+          return prev;
+        });
+      }
     }, autoSpawnInterval);
 
     return () => clearInterval(timer);
-  }, [autoSpawnInterval, maxButtons, removalMode, driftSpeed, logger]);
+  }, [autoSpawnInterval, maxButtons, driftSpeed, logger, shuffleRealIndex]);
 
   const spawnFromParent = useCallback(
     (parent: ButtonState): ButtonState[] => {
@@ -216,48 +238,52 @@ export const MitosisButton: React.FC<MitosisButtonProps> = ({
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, buttonId: number) => {
-      // Check if this is the winning click (down to 1 button)
-      if (buttons.length === 1) {
-        logger.info('MitosisButton: WIN! Last button clicked');
+      // Find the index of the clicked button
+      const clickedIndex = buttons.findIndex((b) => b.id === buttonId);
+
+      // Check if this is the real button
+      if (clickedIndex === realIndex) {
+        logger.info('MitosisButton: WIN! Real button clicked');
         onWin?.(e);
         return;
       }
 
-      // Regular click callback
-      onClick?.(e, buttonId);
+      // Clicked a fake button - spawn more and shuffle
+      logger.debug('MitosisButton: Fake button clicked, spawning more', { clickedIndex, realIndex });
+      onFakeClick?.(e, buttonId);
 
       setButtons((prev) => {
         const clickedButton = prev.find((b) => b.id === buttonId);
-
-        // In removal mode, always remove
-        if (removalMode) {
-          logger.debug('MitosisButton: removal mode, removing button', { buttonId, total: prev.length - 1 });
-          return prev.filter((b) => b.id !== buttonId);
-        }
-
-        // Check if adding new buttons would exceed the limit
-        const newTotal = prev.length + multiplyBy;
-        if (newTotal >= maxButtons) {
-          // Switch to removal mode
-          setRemovalMode(true);
-          logger.info('MitosisButton: reached max, switching to removal mode', { total: prev.length });
-          return prev.filter((b) => b.id !== buttonId);
-        }
-
-        // Otherwise, spawn new buttons (mitosis!)
         if (!clickedButton) return prev;
+
+        // Spawn new buttons (mitosis!)
         const newButtons = spawnFromParent(clickedButton);
+        let result = [...prev, ...newButtons];
+
+        // If over max, remove oldest buttons (but keep enough for the game)
+        if (result.length > maxButtons) {
+          result = result.slice(result.length - maxButtons);
+        }
 
         logger.debug('MitosisButton: multiplying', {
           buttonId,
           spawned: newButtons.length,
-          total: prev.length + newButtons.length,
+          total: result.length,
         });
 
-        return [...prev, ...newButtons];
+        return result;
       });
+
+      // Shuffle which button is real after spawning
+      // Use setTimeout to ensure state has updated
+      setTimeout(() => {
+        setButtons((prev) => {
+          shuffleRealIndex(prev.length);
+          return prev;
+        });
+      }, 0);
     },
-    [buttons.length, removalMode, onClick, onWin, maxButtons, multiplyBy, logger, spawnFromParent]
+    [buttons, realIndex, onFakeClick, onWin, maxButtons, logger, spawnFromParent, shuffleRealIndex]
   );
 
   const defaultRenderButton = ({
