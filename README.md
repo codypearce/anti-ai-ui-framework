@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="header.png" alt="Anti-AI UI Framework" width="600" />
+  <img src="header.jpg" alt="Anti-AI UI Framework" width="600" />
 
   <p><strong>The first framework more hostile than Adobe's cancellation flow.</strong></p>
 
@@ -27,9 +27,11 @@
 </div>
 
 <div align="center">
-  <h3>
-    <a href="https://www.youtube.com/watch?v=g7xtondIT10">ChatGPT Atlas vs Dark Internet Patterns</a>
-  </h3>
+  <h2>
+    <a href="https://www.youtube.com/watch?v=ZgMmaLARToM">
+      ▶️ Watch the Product Release
+    </a>
+  </h2>
 </div>
 
 ## Why?
