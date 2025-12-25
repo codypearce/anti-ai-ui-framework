@@ -26,14 +26,6 @@
   </h3>
 </div>
 
-<div align="center">
-  <h2>
-    <a href="https://www.youtube.com/watch?v=ZgMmaLARToM">
-      ▶️ Watch the Product Release
-    </a>
-  </h2>
-</div>
-
 ## Why?
 
 AI took your job. Then it took your browser's job.
